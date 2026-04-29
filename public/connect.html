@@ -18,10 +18,7 @@
     .value{font-size:14px;font-weight:700;word-break:break-all;margin-top:4px}
     .actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
     button,a.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
-    .primary{background:#222;color:#fff}
-    .secondary{background:#edeefa;color:#333}
-    .danger{background:#fff0f0;color:#c02020;border:1px solid #ffd4d4}
-    .ghost{background:#f5f5f8;color:#333}
+    .primary{background:#222;color:#fff}.secondary{background:#edeefa;color:#333}.danger{background:#fff0f0;color:#c02020;border:1px solid #ffd4d4}.ghost{background:#f5f5f8;color:#333}
     .log{margin-top:16px;max-height:280px;overflow:auto;background:#10121a;color:#d7e1ff;border-radius:16px;padding:14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;white-space:pre-wrap}
     .hint{font-size:13px;color:#777;margin-top:10px}
     @media(max-width:700px){.grid{grid-template-columns:1fr}.top{display:block}}
@@ -32,7 +29,7 @@
     <div class="top">
       <div>
         <h1 class="title">치지직 채팅 연결</h1>
-        <p class="desc">이 페이지에서 본인 치지직 계정으로 로그인한 뒤 연결을 시작하세요. OBS에는 아래 OBS 주소만 넣으면 됩니다.</p>
+        <p class="desc">로그인 후 연결을 시작하세요. OBS에는 아래 OBS 주소만 넣으면 됩니다.</p>
       </div>
       <div class="badge" id="statusBadge">확인 중</div>
     </div>
@@ -46,15 +43,15 @@
 
     <div class="actions">
       <a class="btn primary" id="loginBtn" href="#">치지직 로그인</a>
-      <button class="secondary" id="startBtn">연결 시작</button>
-      <button class="ghost" id="testBtn">비팔로워 테스트</button>
-      <button class="ghost" id="testFollowerBtn">팔로워 테스트</button>
-      <button class="ghost" id="testSubBtn">구독자 테스트</button>
-      <button class="ghost" id="testBroadcasterBtn">스트리머 테스트</button>
-      <button class="ghost" id="testModBtn">매니저 테스트</button>
-      <button class="ghost" id="testDonationBtn">도네이션 테스트</button>
-      <button class="secondary" id="stopBtn">연결 중지</button>
-      <button class="danger" id="logoutBtn">로그아웃 / 연결 초기화</button>
+      <button class="secondary" id="startBtn" type="button">연결 시작</button>
+      <button class="ghost" id="testBtn" type="button">비팔로워 테스트</button>
+      <button class="ghost" id="testFollowerBtn" type="button">팔로워 테스트</button>
+      <button class="ghost" id="testSubBtn" type="button">구독자 테스트</button>
+      <button class="ghost" id="testBroadcasterBtn" type="button">스트리머 테스트</button>
+      <button class="ghost" id="testModBtn" type="button">매니저 테스트</button>
+      <button class="ghost" id="testDonationBtn" type="button">도네이션 테스트</button>
+      <button class="secondary" id="stopBtn" type="button">연결 중지</button>
+      <button class="danger" id="logoutBtn" type="button">로그아웃 / 연결 초기화</button>
     </div>
 
     <div class="hint">테스트 버튼은 OBS 주소(/chat/클라이언트)가 열린 상태에서 화면에 표시됩니다.</div>
@@ -63,10 +60,32 @@
 
 <script>
 (() => {
-  const $ = (id) => document.getElementById(id);
-  const clientId = String(location.pathname.split('/').filter(Boolean).pop() || 'pop').trim() || 'pop';
+  'use strict';
+  const qs = (id) => document.getElementById(id);
+  const parts = location.pathname.split('/').filter(Boolean);
+  const clientId = String(parts[parts.length - 1] || 'pop').trim() || 'pop';
 
-  $('loginBtn').href = `/auth/chzzk/start/${encodeURIComponent(clientId)}`;
+  function setText(id, value) {
+    const el = qs(id);
+    if (el) el.textContent = value == null ? '-' : String(value);
+  }
+
+  function safeBind(id, handler) {
+    const el = qs(id);
+    if (!el) {
+      console.warn('[connect] missing button #' + id);
+      return;
+    }
+    el.addEventListener('click', async (event) => {
+      event.preventDefault();
+      try {
+        await handler();
+      } catch (err) {
+        console.error(err);
+        alert('테스트 전송 실패: ' + (err && err.message ? err.message : err));
+      }
+    });
+  }
 
   async function call(method, url, body) {
     const res = await fetch(url, {
@@ -74,26 +93,20 @@
       headers: { 'Content-Type': 'application/json' },
       body: body ? JSON.stringify(body) : undefined
     });
-
     const text = await res.text();
     let data = {};
     try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
-
-    if (!res.ok) {
-      throw new Error(data?.error || data?.message || data?.raw || JSON.stringify(data));
-    }
+    if (!res.ok) throw new Error(data.error || data.message || data.raw || JSON.stringify(data));
     return data;
   }
 
   function render(s) {
-    $('clientIdValue').textContent = s.clientId || clientId;
-    $('hasToken').textContent = s.hasToken ? '로그인됨' : '로그인 필요';
-    $('channel').textContent = s.channelName ? `${s.channelName} (${s.channelId || '-'})` : (s.channelId || '-');
-    $('obsUrl').textContent = s.obsUrl || `/chat/${clientId}`;
-    $('statusBadge').textContent = s.status || 'idle';
-
-    const lines = [];
-    lines.push(JSON.stringify({
+    setText('clientIdValue', s.clientId || clientId);
+    setText('hasToken', s.hasToken ? '로그인됨' : '로그인 필요');
+    setText('channel', s.channelName ? `${s.channelName} (${s.channelId || '-'})` : (s.channelId || '-'));
+    setText('obsUrl', s.obsUrl || `/chat/${clientId}`);
+    setText('statusBadge', s.status || 'idle');
+    const lines = [JSON.stringify({
       clientId: s.clientId || clientId,
       hasToken: s.hasToken,
       status: s.status,
@@ -102,18 +115,13 @@
       sessionKey: s.sessionKey,
       lastError: s.lastError,
       obsUrl: s.obsUrl
-    }, null, 2));
-
-    lines.push('\n--- 최근 로그 ---');
-    for (const d of (s.debug || [])) {
-      lines.push(`[${d.at}] ${d.message}${d.extra ? `\n${JSON.stringify(d.extra, null, 2)}` : ''}`);
-    }
-    $('log').textContent = lines.join('\n');
+    }, null, 2), '\n--- 최근 로그 ---'];
+    for (const d of (s.debug || [])) lines.push(`[${d.at}] ${d.message}${d.extra ? `\n${JSON.stringify(d.extra, null, 2)}` : ''}`);
+    setText('log', lines.join('\n'));
   }
 
   async function refresh() {
-    const s = await call('GET', `/api/status/${encodeURIComponent(clientId)}`);
-    render(s);
+    render(await call('GET', `/api/status/${encodeURIComponent(clientId)}`));
   }
 
   async function sendTest(type, payload) {
@@ -122,68 +130,27 @@
     await refresh();
   }
 
-  function bind(id, fn) {
-    const el = $(id);
-    if (!el) return;
-    el.onclick = async () => {
-      try {
-        await fn();
-      } catch (err) {
-        console.error(err);
-        alert('테스트 전송 실패: ' + (err?.message || err));
-      }
-    };
-  }
+  const loginBtn = qs('loginBtn');
+  if (loginBtn) loginBtn.href = `/auth/chzzk/start/${encodeURIComponent(clientId)}`;
 
-  bind('startBtn', async () => render(await call('POST', `/api/start/${encodeURIComponent(clientId)}`)));
-  bind('stopBtn', async () => render(await call('POST', `/api/stop/${encodeURIComponent(clientId)}`)));
-  bind('logoutBtn', async () => {
+  safeBind('startBtn', async () => render(await call('POST', `/api/start/${encodeURIComponent(clientId)}`)));
+  safeBind('stopBtn', async () => render(await call('POST', `/api/stop/${encodeURIComponent(clientId)}`)));
+  safeBind('logoutBtn', async () => {
     if (!confirm('로그아웃하면 현재 연결과 저장된 토큰이 초기화됩니다. 계속할까요?')) return;
     render(await call('POST', `/api/logout/${encodeURIComponent(clientId)}`));
   });
 
-  bind('testBtn', () => sendTest('chat', {
-    role: 'default',
-    nickname: '비팔로워',
-    message: '비팔로워 테스트 메시지입니다!'
-  }));
+  safeBind('testBtn', () => sendTest('chat', { role: 'default', nickname: '비팔로워', message: '비팔로워 테스트 메시지입니다!' }));
+  safeBind('testFollowerBtn', () => sendTest('chat', { role: 'follower', nickname: '팔로워', message: '팔로워 테스트 메시지입니다!' }));
+  safeBind('testSubBtn', () => sendTest('chat', { role: 'subscriber', nickname: '구독자', message: '구독자 테스트 메시지입니다!' }));
+  safeBind('testBroadcasterBtn', () => sendTest('chat', { role: 'broadcaster', nickname: '스트리머', message: '스트리머 테스트 메시지입니다!' }));
+  safeBind('testModBtn', () => sendTest('chat', { role: 'moderator', nickname: '매니저', message: '매니저 테스트 메시지입니다!' }));
+  safeBind('testDonationBtn', () => sendTest('donation', { nickname: '후원테스트', amount: 12000, amountText: '₩12,000', message: '도네이션 테스트 메시지입니다!' }));
 
-  bind('testFollowerBtn', () => sendTest('chat', {
-    role: 'follower',
-    nickname: '팔로워',
-    message: '팔로워 테스트 메시지입니다!'
-  }));
-
-  bind('testSubBtn', () => sendTest('chat', {
-    role: 'subscriber',
-    nickname: '구독자',
-    message: '구독자 테스트 메시지입니다!'
-  }));
-
-  bind('testBroadcasterBtn', () => sendTest('chat', {
-    role: 'broadcaster',
-    nickname: '스트리머',
-    message: '스트리머 테스트 메시지입니다!'
-  }));
-
-  bind('testModBtn', () => sendTest('chat', {
-    role: 'moderator',
-    nickname: '매니저',
-    message: '매니저 테스트 메시지입니다!'
-  }));
-
-  bind('testDonationBtn', () => sendTest('donation', {
-    nickname: '후원테스트',
-    amount: 12000,
-    amountText: '₩12,000',
-    message: '도네이션 테스트 메시지입니다!'
-  }));
-
-  refresh().catch(err => {
+  refresh().catch((err) => {
     console.error(err);
-    $('log').textContent = '상태 조회 실패: ' + (err?.message || err);
+    setText('log', '상태 조회 실패: ' + (err && err.message ? err.message : err));
   });
-
   setInterval(() => refresh().catch(() => {}), 3000);
 })();
 </script>
