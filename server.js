@@ -87,22 +87,24 @@ async function loadConfig(clientId) {
 }
 
 async function renderWidgetCss(config) {
-  const template = await fs.readFile(path.join(__dirname, 'public', 'original-widget.css'), 'utf8');
-  const fallback = {
-    namesSize: 16, msgSize: 16, msgHide: 7, alertSize: 16,
-    msgback: '#ffffff', nameback: '#97d561', textback: 'rgba(173,143,255,0)',
-    namesFont: 'Quicksand', msgFont: 'Quicksand', namesBold: '700', msgBold: '700',
-    namescolor: '#ffffff', msgcolor: '#47843b', accentcolor: '#dcbb96', alerttext: '#47843b',
-    alertsboxcol: '#ffffff', badgesContcolor: '#bce78e', badgescolor: '#ffffff', bordercol: '#97d561',
-    frog1: '#bce78e', frog2: config.frog2 || config.frog1 || '#bce78e', lily1: '#f592b4', lily2: '#f7b9cf', lily3: '#ffd4e3', lilypad: '#82c080',
-    alertnames: '#47843b', alerticon: '', msgLimitAmount: 4
+  const css = await fs.readFile(path.join(__dirname, 'public', 'chat.css'), 'utf8');
+  const pick = (key, fallback = '') => {
+    const v = config[key] ?? config[key.replace(/-([a-z])/g, (_, c) => c.toUpperCase())];
+    return v === undefined || v === null || v === '' ? fallback : v;
   };
-  const valueOf = (key) => {
-    const clean = String(key).trim();
-    return config[clean] ?? config[clean.replace(/-([a-z])/g, (_,c)=>c.toUpperCase())] ?? fallback[clean] ?? '';
+  const rootVars = {
+    namesSize: `${pick('namesSize', 16)}px`, msgSize: `${pick('msgSize', 16)}px`, msgHide: `${pick('msgHide', 7)}s`,
+    namesFont: `'${String(pick('namesFont', 'Quicksand')).replace(/'/g, '')}', sans-serif`,
+    msgFont: `'${String(pick('msgFont', 'Quicksand')).replace(/'/g, '')}', sans-serif`,
+    namesBold: pick('namesBold', '700'), msgBold: pick('msgBold', '700'), namescolor: pick('namescolor', '#ffffff'), msgcolor: pick('msgcolor', '#47843b'),
+    msgback: pick('msgback', '#ffffff'), nameback: pick('nameback', '#97d561'), textback: pick('textback', 'rgba(173,143,255,0)'),
+    badgesContcolor: pick('badgesContcolor', '#bce78e'), badgescolor: pick('badgescolor', '#ffffff'), bordercol: pick('bordercol', '#97d561'),
+    accentcolor: pick('accentcolor', '#dcbb96'), frog1: pick('frog1', '#bce78e'), frog2: pick('frog2', pick('frog1', '#bce78e')),
+    lily1: pick('lily1', '#f592b4'), lily2: pick('lily2', '#f7b9cf'), lily3: pick('lily3', '#ffd4e3'), lilypad: pick('lilypad', '#82c080'), msgDistance: `${pick('msgDistance', 20)}px`
   };
-  const css = template.replace(/\{([^}]+)\}/g, (_, key) => String(valueOf(key)));
-  return `@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(config.namesFont || 'Quicksand')}:wght@400;500;600;700&display=swap');\nhtml,body{width:100%;height:100%;margin:0;background:transparent;overflow:hidden;}\n${css}`;
+  const varCss = Object.entries(rootVars).map(([k, v]) => `--${k}:${v};`).join('');
+  const font = encodeURIComponent(pick('namesFont', 'Quicksand'));
+  return `@import url('https://fonts.googleapis.com/css2?family=${font}:wght@400;500;600;700&display=swap');\n:root{${varCss}}\n${css}`;
 }
 async function readJsonMaybe(p) {
   try { return JSON.parse(await fs.readFile(p, 'utf8')); } catch { return null; }
