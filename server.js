@@ -317,51 +317,73 @@ async function subscribeChat(clientId, sessionKey, accessToken) {
 
 function attachSocketHandlers(clientId, socket, accessToken) {
   const st = getState(clientId);
+
   const handlePayload = async (label, payload) => {
+    // CHZZK Socket.IO sometimes sends JSON as a string.
+    // Parse it first so sessionKey can be detected.
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch {}
+    }
+
     logState(clientId, `socket event:${label}`, payload);
+
     const eventType = getEventType(payload);
     const systemType = getSystemType(payload);
     const sessionKey = findSessionKeyFromPayload(payload);
 
-    if (eventType === 'SYSTEM' || systemType === 'connected' || systemType === 'subscribed' || sessionKey) {
-if (sessionKey) {
-  st.sessionKey = sessionKey;
-  logState(clientId, 'sessionKey received', { sessionKey });
+    if (sessionKey) {
+      st.sessionKey = sessionKey;
+      logState(clientId, 'sessionKey received', { sessionKey });
 
-  try {
-    logState(clientId, 'chat subscribe request start', { sessionKey });
+      try {
+        logState(clientId, 'chat subscribe request start', { sessionKey });
 
-    await chzzkFetch(
-      `/open/v1/sessions/events/subscribe/chat?sessionKey=${encodeURIComponent(sessionKey)}`,
-      { method: 'POST' },
-      accessToken
-    );
+        await chzzkFetch(
+          `/open/v1/sessions/events/subscribe/chat?sessionKey=${encodeURIComponent(sessionKey)}`,
+          { method: 'POST' },
+          accessToken
+        );
 
-    setStatus(clientId, 'chat_subscribed', { sessionKey });
-    logState(clientId, 'chat subscribe success', { sessionKey });
-  } catch (e) {
-    logState(clientId, 'chat subscribe failed', {
-      message: e.message,
-      status: e.status,
-      body: e.body
-    });
-    setError(clientId, e);
-  }
+        setStatus(clientId, 'chat_subscribed', { sessionKey });
+        logState(clientId, 'chat subscribe success', { sessionKey });
+      } catch (e) {
+        logState(clientId, 'chat subscribe failed', {
+          message: e.message,
+          status: e.status,
+          body: e.body
+        });
+        setError(clientId, e);
+      }
 
-  return;
-}
+      return;
+    }
+
+    if (systemType === 'subscribed') {
+      setStatus(clientId, 'subscribed', payload?.data || payload);
+      return;
+    }
+
+    if (systemType === 'revoked') {
+      setStatus(clientId, 'revoked', payload?.data || payload);
+      return;
     }
 
     if (eventType === 'CHAT' || label === 'CHAT' || payload?.eventType === 'CHAT') {
       const chat = normalizeChat(payload, clientId);
       emitChat(clientId, chat);
-      setStatus(clientId, 'receiving_chat', { nickname: chat.nickname, message: chat.message });
+      setStatus(clientId, 'receiving_chat', {
+        nickname: chat.nickname,
+        message: chat.message
+      });
     }
   };
 
   socket.on('connect', () => {
     setStatus(clientId, 'socket_connected_waiting_session_key', { socketId: socket.id });
   });
+
   socket.on('connect_error', (err) => setError(clientId, err));
   socket.on('disconnect', (reason) => setStatus(clientId, 'socket_disconnected', { reason }));
 
@@ -374,12 +396,15 @@ if (sessionKey) {
   const originalOnevent = socket.onevent;
   socket.onevent = function(packet) {
     const args = packet.data || [];
+
     if (args.length) {
       const [eventName, payload] = args;
-      if (!['SYSTEM','CHAT','DONATION','SUBSCRIPTION','message','event'].includes(eventName)) {
+
+      if (!['SYSTEM', 'CHAT', 'DONATION', 'SUBSCRIPTION', 'message', 'event'].includes(eventName)) {
         handlePayload(String(eventName), payload ?? args.slice(1));
       }
     }
+
     originalOnevent.call(this, packet);
   };
 }
