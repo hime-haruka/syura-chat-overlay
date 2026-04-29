@@ -101,32 +101,8 @@ async function renderWidgetCss(config) {
     const clean = String(key).trim();
     return config[clean] ?? config[clean.replace(/-([a-z])/g, (_,c)=>c.toUpperCase())] ?? fallback[clean] ?? '';
   };
-  const css = template.replace(/\{([a-zA-Z0-9_\- ]+)\}/g, (_, key) => String(valueOf(key)));
-  const vars = `:root{--frog1:${valueOf('frog1')};--frog2:${valueOf('frog2') || valueOf('frog1')};--lily1:${valueOf('lily1')};--lily2:${valueOf('lily2') || valueOf('lily1')};--lily3:${valueOf('lily3') || valueOf('lily1')};--lilypad:${valueOf('lilypad')};--badgescolor:${valueOf('badgescolor')};--badgesContcolor:${valueOf('badgesContcolor')};--bordercol:${valueOf('bordercol')};}`;
-  const hardFix = `
-/* final render safety */
-html,body{width:100%;height:100%;margin:0;background:transparent!important;overflow:hidden!important;}
-.main-container{position:fixed!important;left:48px!important;bottom:42px!important;width:min(560px,calc(100vw - 96px))!important;height:auto!important;max-height:calc(100vh - 84px)!important;display:flex!important;flex-direction:column!important;justify-content:flex-end!important;align-items:stretch!important;overflow:visible!important;text-align:left!important;}
-.message-row{position:relative!important;display:block!important;width:100%!important;max-width:100%!important;margin:0 0 var(--rowGap,18px) 0!important;padding:0!important;overflow:visible!important;flex:0 0 auto!important;}
-.namebox{position:relative!important;left:42px!important;top:0!important;display:inline-flex!important;align-items:center!important;width:max-content!important;max-width:calc(100% - 70px)!important;z-index:4!important;white-space:nowrap!important;}
-.msgcont{position:relative!important;display:block!important;left:0!important;top:-8px!important;width:100%!important;overflow:visible!important;z-index:1!important;}
-.messagebox{position:relative!important;display:block!important;width:100%!important;min-width:260px!important;max-width:100%!important;min-height:48px!important;overflow:visible!important;box-sizing:border-box!important;line-height:1.45!important;}
-.messagebox .message{position:relative!important;display:inline!important;max-width:100%!important;overflow:visible!important;word-break:keep-all!important;overflow-wrap:anywhere!important;white-space:normal!important;}
-.custombadge,.custombadge svg,.custombadge img,.svgbadge{width:calc(var(--namesSize) - 2px)!important;height:calc(var(--namesSize) - 2px)!important;max-width:calc(var(--namesSize) - 2px)!important;max-height:calc(var(--namesSize) - 2px)!important;display:inline-block!important;object-fit:contain!important;overflow:hidden!important;}
-.badgesbox:empty,.badges:empty{display:none!important;}
-.messagebox>svg:not(.svgbadge){position:absolute!important;max-width:72px!important;max-height:72px!important;overflow:visible!important;pointer-events:none!important;}
-.lilymain,.lilyvip{width:44px!important;height:auto!important;}
-.lilysub{width:58px!important;height:auto!important;}
-.lilymod{width:54px!important;height:auto!important;}
-.lilyfrog{width:62px!important;height:auto!important;}
-.frogsub{width:45px!important;height:auto!important;}
-.lefthand{width:24px!important;height:43px!important;}
-.righthand{width:24px!important;height:43px!important;}
-.lefthand svg,.righthand svg{width:100%!important;height:100%!important;max-width:100%!important;max-height:100%!important;}
-.default .badgescont:has(.badges:empty){display:none!important;}
-@supports not selector(:has(*)){.default .badgescont{display:none!important;}}
-`;
-  return `@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(config.namesFont || 'Quicksand')}:wght@400;500;600;700&display=swap');\nhtml,body{width:100%;height:100%;margin:0;background:transparent;overflow:hidden;}\n${vars}\n${css}\n${hardFix}`;
+  const css = template.replace(/\{([a-zA-Z0-9_-]+)\}/g, (_, key) => String(valueOf(key)));
+  return `@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(config.namesFont || 'Quicksand')}:wght@400;500;600;700&display=swap');\nhtml,body{width:100%;height:100%;margin:0;background:transparent;overflow:hidden;}\n${css}`;
 }
 async function readJsonMaybe(p) {
   try { return JSON.parse(await fs.readFile(p, 'utf8')); } catch { return null; }
@@ -538,7 +514,7 @@ app.get('/chat/:clientId', async (req, res) => {
   try { config = await loadConfig(clientId); }
   catch { return res.status(404).send('Unknown clientId'); }
   const css = await renderWidgetCss(config);
-  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/chat.js"></script></body></html>`);
+  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="out"><div class="main-container" data-client-id="${clientId}"></div></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/original-fragments.js"></script><script src="/static/chat.js"></script></body></html>`);
 });
 
 app.get('/connect/:clientId', async (req, res) => {
