@@ -89,7 +89,13 @@ refresh(); setInterval(refresh, 3000);
   const clientInput = $('clientId');
 
   function getClientId() {
-    return (clientInput && clientInput.value ? clientInput.value : (window.clientId || 'pop')).trim() || 'pop';
+    const inputEl = document.getElementById('clientId');
+    const raw =
+      inputEl && typeof inputEl.value === 'string'
+        ? inputEl.value
+        : (typeof window.clientId === 'string' ? window.clientId : 'pop');
+
+    return String(raw || 'pop').trim() || 'pop';
   }
 
   async function postJson(url, body) {
