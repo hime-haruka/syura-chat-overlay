@@ -324,22 +324,32 @@ function attachSocketHandlers(clientId, socket, accessToken) {
     const sessionKey = findSessionKeyFromPayload(payload);
 
     if (eventType === 'SYSTEM' || systemType === 'connected' || systemType === 'subscribed' || sessionKey) {
-      if (sessionKey && !st.sessionKey) {
-        st.sessionKey = sessionKey;
-        logState(clientId, 'sessionKey received', { sessionKey });
-        try {
-          await subscribeChat(clientId, sessionKey, accessToken);
-        } catch (e) { setError(clientId, e); }
-        return;
-      }
-      if (systemType === 'subscribed') {
-        setStatus(clientId, 'subscribed', payload?.data || payload);
-        return;
-      }
-      if (systemType === 'revoked') {
-        setStatus(clientId, 'revoked', payload?.data || payload);
-        return;
-      }
+if (sessionKey) {
+  st.sessionKey = sessionKey;
+  logState(clientId, 'sessionKey received', { sessionKey });
+
+  try {
+    logState(clientId, 'chat subscribe request start', { sessionKey });
+
+    await chzzkFetch(
+      `/open/v1/sessions/events/subscribe/chat?sessionKey=${encodeURIComponent(sessionKey)}`,
+      { method: 'POST' },
+      accessToken
+    );
+
+    setStatus(clientId, 'chat_subscribed', { sessionKey });
+    logState(clientId, 'chat subscribe success', { sessionKey });
+  } catch (e) {
+    logState(clientId, 'chat subscribe failed', {
+      message: e.message,
+      status: e.status,
+      body: e.body
+    });
+    setError(clientId, e);
+  }
+
+  return;
+}
     }
 
     if (eventType === 'CHAT' || label === 'CHAT' || payload?.eventType === 'CHAT') {
