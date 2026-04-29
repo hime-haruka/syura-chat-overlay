@@ -5,7 +5,26 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>치지직 채팅 연결</title>
   <style>
-    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f6fb;color:#222;display:flex;align-items:center;justify-content:center;padding:24px}.card{width:min(760px,100%);background:#fff;border:1px solid #e7e8ef;border-radius:24px;box-shadow:0 16px 48px rgba(35,30,70,.1);padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.badge{padding:6px 10px;border-radius:999px;background:#eef7ef;color:#287339;font-weight:700;font-size:13px}.title{font-size:24px;font-weight:800;margin:0 0 8px}.desc{color:#666;line-height:1.55;margin:0 0 22px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}.box{padding:14px;border-radius:16px;background:#f8f8fc;border:1px solid #e8e8f0}.label{font-size:12px;color:#777}.value{font-size:14px;font-weight:700;word-break:break-all;margin-top:4px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}button,a.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.primary{background:#222;color:#fff}.secondary{background:#edeefa;color:#333}.danger{background:#fff0f0;color:#c02020;border:1px solid #ffd4d4}.ghost{background:#f5f5f8;color:#333}.log{margin-top:16px;max-height:280px;overflow:auto;background:#10121a;color:#d7e1ff;border-radius:16px;padding:14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;white-space:pre-wrap}.hint{font-size:13px;color:#777;margin-top:10px}@media(max-width:700px){.grid{grid-template-columns:1fr}.top{display:block}}
+    *{box-sizing:border-box}
+    body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f6fb;color:#222;display:flex;align-items:center;justify-content:center;padding:24px}
+    .card{width:min(760px,100%);background:#fff;border:1px solid #e7e8ef;border-radius:24px;box-shadow:0 16px 48px rgba(35,30,70,.1);padding:28px}
+    .top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}
+    .badge{padding:6px 10px;border-radius:999px;background:#eef7ef;color:#287339;font-weight:700;font-size:13px}
+    .title{font-size:24px;font-weight:800;margin:0 0 8px}
+    .desc{color:#666;line-height:1.55;margin:0 0 22px}
+    .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}
+    .box{padding:14px;border-radius:16px;background:#f8f8fc;border:1px solid #e8e8f0}
+    .label{font-size:12px;color:#777}
+    .value{font-size:14px;font-weight:700;word-break:break-all;margin-top:4px}
+    .actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}
+    button,a.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}
+    .primary{background:#222;color:#fff}
+    .secondary{background:#edeefa;color:#333}
+    .danger{background:#fff0f0;color:#c02020;border:1px solid #ffd4d4}
+    .ghost{background:#f5f5f8;color:#333}
+    .log{margin-top:16px;max-height:280px;overflow:auto;background:#10121a;color:#d7e1ff;border-radius:16px;padding:14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;white-space:pre-wrap}
+    .hint{font-size:13px;color:#777;margin-top:10px}
+    @media(max-width:700px){.grid{grid-template-columns:1fr}.top{display:block}}
   </style>
 </head>
 <body>
@@ -19,7 +38,7 @@
     </div>
 
     <div class="grid">
-      <div class="box"><div class="label">클라이언트</div><div class="value" id="clientId">-</div></div>
+      <div class="box"><div class="label">클라이언트</div><div class="value" id="clientIdValue">-</div></div>
       <div class="box"><div class="label">로그인</div><div class="value" id="hasToken">-</div></div>
       <div class="box"><div class="label">채널</div><div class="value" id="channel">-</div></div>
       <div class="box"><div class="label">OBS 주소</div><div class="value" id="obsUrl">-</div></div>
@@ -28,112 +47,79 @@
     <div class="actions">
       <a class="btn primary" id="loginBtn" href="#">치지직 로그인</a>
       <button class="secondary" id="startBtn">연결 시작</button>
-      <button class="ghost" id="testBtn">일반 테스트</button>
-      <button class="ghost" id="testBroadcasterBtn">방장 테스트</button>
-      <button class="ghost" id="testModBtn">매니저 테스트</button>
+      <button class="ghost" id="testBtn">비팔로워 테스트</button>
       <button class="ghost" id="testFollowerBtn">팔로워 테스트</button>
       <button class="ghost" id="testSubBtn">구독자 테스트</button>
+      <button class="ghost" id="testBroadcasterBtn">스트리머 테스트</button>
+      <button class="ghost" id="testModBtn">매니저 테스트</button>
       <button class="ghost" id="testDonationBtn">도네이션 테스트</button>
       <button class="secondary" id="stopBtn">연결 중지</button>
       <button class="danger" id="logoutBtn">로그아웃 / 연결 초기화</button>
     </div>
 
-    <div class="hint">로그아웃은 서버에 저장된 토큰과 현재 세션을 지웁니다. 다른 계정으로 다시 로그인하거나 연결이 꼬였을 때 사용하세요.</div>
+    <div class="hint">테스트 버튼은 OBS 주소(/chat/클라이언트)가 열린 상태에서 화면에 표시됩니다.</div>
     <div class="log" id="log">로딩 중...</div>
   </main>
-<script>
-const clientId = location.pathname.split('/').filter(Boolean).pop();
-const $ = (id) => document.getElementById(id);
-$('loginBtn').href = `/auth/chzzk/start/${clientId}`;
-async function call(method, url, body){
-  const res = await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
-  const data = await res.json().catch(()=>({}));
-  if(!res.ok) throw data;
-  return data;
-}
-function render(s){
-  $('clientId').textContent = s.clientId;
-  $('hasToken').textContent = s.hasToken ? '로그인됨' : '로그인 필요';
-  $('channel').textContent = s.channelName ? `${s.channelName} (${s.channelId||'-'})` : (s.channelId || '-');
-  $('obsUrl').textContent = s.obsUrl;
-  $('statusBadge').textContent = s.status || 'idle';
-  const lines = [];
-  lines.push(JSON.stringify({clientId:s.clientId, hasToken:s.hasToken, status:s.status, channelId:s.channelId, channelName:s.channelName, sessionKey:s.sessionKey, lastError:s.lastError, obsUrl:s.obsUrl}, null, 2));
-  lines.push('\n--- 최근 로그 ---');
-  for(const d of (s.debug||[])) lines.push(`[${d.at}] ${d.message}${d.extra?`\n${JSON.stringify(d.extra,null,2)}`:''}`);
-  $('log').textContent = lines.join('\n');
-}
-async function refresh(){
-  const s = await call('GET', `/api/status/${clientId}`);
-  render(s);
-}
-$('startBtn').onclick = async()=>{ render(await call('POST', `/api/start/${clientId}`)); };
-$('stopBtn').onclick = async()=>{ render(await call('POST', `/api/stop/${clientId}`)); };
-$('logoutBtn').onclick = async()=>{
-  if(!confirm('로그아웃하면 현재 연결과 저장된 토큰이 초기화됩니다. 계속할까요?')) return;
-  render(await call('POST', `/api/logout/${clientId}`));
-};
-async function sendTest(role, message){ await call('POST', `/api/test/${clientId}`, {role, message}); await refresh(); }
-$('testBtn').onclick = async()=>sendTest('common_user','OBS 일반 테스트 채팅입니다!');
-$('testBroadcasterBtn').onclick = async()=>sendTest('streamer','방장 테스트 메시지입니다!');
-$('testModBtn').onclick = async()=>sendTest('manager','매니저 테스트 메시지입니다!');
-$('testVipBtn').onclick = async()=>sendTest('follower','팔로워 테스트 메시지입니다!');
-$('testSubBtn').onclick = async()=>sendTest('subscriber','구독자 테스트 메시지입니다!');
-$('testDonationBtn').onclick = async()=>{ await call('POST', `/api/test/${clientId}`, {type:'donation', nickname:'후원테스트', amount:12000, amountText:'₩12,000', message:'도네이션 테스트 메시지입니다!'}); await refresh(); };
-refresh(); setInterval(refresh, 3000);
-</script>
 
 <script>
 (() => {
   const $ = (id) => document.getElementById(id);
-  const clientInput = $('clientId');
+  const clientId = String(location.pathname.split('/').filter(Boolean).pop() || 'pop').trim() || 'pop';
 
-  function getClientId() {
-    const inputEl = document.getElementById('clientId');
-    const raw =
-      inputEl && typeof inputEl.value === 'string'
-        ? inputEl.value
-        : (typeof window.clientId === 'string' ? window.clientId : 'pop');
+  $('loginBtn').href = `/auth/chzzk/start/${encodeURIComponent(clientId)}`;
 
-    return String(raw || 'pop').trim() || 'pop';
-  }
-
-  async function postJson(url, body) {
+  async function call(method, url, body) {
     const res = await fetch(url, {
-      method: 'POST',
+      method,
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body || {})
+      body: body ? JSON.stringify(body) : undefined
     });
+
     const text = await res.text();
-    let data = null;
-    try { data = JSON.parse(text); } catch (e) { data = text; }
-    if (!res.ok) throw new Error(typeof data === 'string' ? data : JSON.stringify(data));
+    let data = {};
+    try { data = text ? JSON.parse(text) : {}; } catch { data = { raw: text }; }
+
+    if (!res.ok) {
+      throw new Error(data?.error || data?.message || data?.raw || JSON.stringify(data));
+    }
     return data;
   }
 
-  async function sendOverlayTest(role, message) {
-    const id = getClientId();
-    await postJson(`/api/test/${encodeURIComponent(id)}`, {
-      type: 'chat',
-      role,
-      nickname:
-        role === 'broadcaster' ? '스트리머' :
-        role === 'moderator' || role === 'mod' ? '매니저' :
-        role === 'subscriber' ? '구독자' :
-        role === 'follower' ? '팔로워' : '비팔로워',
-      message
-    });
+  function render(s) {
+    $('clientIdValue').textContent = s.clientId || clientId;
+    $('hasToken').textContent = s.hasToken ? '로그인됨' : '로그인 필요';
+    $('channel').textContent = s.channelName ? `${s.channelName} (${s.channelId || '-'})` : (s.channelId || '-');
+    $('obsUrl').textContent = s.obsUrl || `/chat/${clientId}`;
+    $('statusBadge').textContent = s.status || 'idle';
+
+    const lines = [];
+    lines.push(JSON.stringify({
+      clientId: s.clientId || clientId,
+      hasToken: s.hasToken,
+      status: s.status,
+      channelId: s.channelId,
+      channelName: s.channelName,
+      sessionKey: s.sessionKey,
+      lastError: s.lastError,
+      obsUrl: s.obsUrl
+    }, null, 2));
+
+    lines.push('\n--- 최근 로그 ---');
+    for (const d of (s.debug || [])) {
+      lines.push(`[${d.at}] ${d.message}${d.extra ? `\n${JSON.stringify(d.extra, null, 2)}` : ''}`);
+    }
+    $('log').textContent = lines.join('\n');
   }
 
-  async function sendDonationTest() {
-    const id = getClientId();
-    await postJson(`/api/test/${encodeURIComponent(id)}`, {
-      type: 'donation',
-      nickname: '후원테스트',
-      amount: 12000,
-      amountText: '₩12,000',
-      message: '도네이션 테스트 메시지입니다!'
-    });
+  async function refresh() {
+    const s = await call('GET', `/api/status/${encodeURIComponent(clientId)}`);
+    render(s);
+  }
+
+  async function sendTest(type, payload) {
+    const result = await call('POST', `/api/test/${encodeURIComponent(clientId)}`, { type, ...payload });
+    console.log('[connect test emitted]', result);
+    await refresh();
   }
 
   function bind(id, fn) {
@@ -142,26 +128,64 @@ refresh(); setInterval(refresh, 3000);
     el.onclick = async () => {
       try {
         await fn();
-        if (typeof refresh === 'function') await refresh();
       } catch (err) {
         console.error(err);
-        alert('테스트 전송 실패: ' + (err && err.message ? err.message : err));
+        alert('테스트 전송 실패: ' + (err?.message || err));
       }
     };
   }
 
-  bind('testBtn', () => sendOverlayTest('default', '비팔로워 테스트 메시지입니다!'));
-  bind('testMessageBtn', () => sendOverlayTest('default', '비팔로워 테스트 메시지입니다!'));
-  bind('testFollowerBtn', () => sendOverlayTest('follower', '팔로워 테스트 메시지입니다!'));
-  bind('testSubBtn', () => sendOverlayTest('subscriber', '구독자 테스트 메시지입니다!'));
-  bind('testModBtn', () => sendOverlayTest('moderator', '매니저 테스트 메시지입니다!'));
-  bind('testBroadcasterBtn', () => sendOverlayTest('broadcaster', '스트리머 테스트 메시지입니다!'));
-  bind('testDonationBtn', sendDonationTest);
+  bind('startBtn', async () => render(await call('POST', `/api/start/${encodeURIComponent(clientId)}`)));
+  bind('stopBtn', async () => render(await call('POST', `/api/stop/${encodeURIComponent(clientId)}`)));
+  bind('logoutBtn', async () => {
+    if (!confirm('로그아웃하면 현재 연결과 저장된 토큰이 초기화됩니다. 계속할까요?')) return;
+    render(await call('POST', `/api/logout/${encodeURIComponent(clientId)}`));
+  });
 
-  window.sendOverlayTest = sendOverlayTest;
-  window.sendDonationTest = sendDonationTest;
+  bind('testBtn', () => sendTest('chat', {
+    role: 'default',
+    nickname: '비팔로워',
+    message: '비팔로워 테스트 메시지입니다!'
+  }));
+
+  bind('testFollowerBtn', () => sendTest('chat', {
+    role: 'follower',
+    nickname: '팔로워',
+    message: '팔로워 테스트 메시지입니다!'
+  }));
+
+  bind('testSubBtn', () => sendTest('chat', {
+    role: 'subscriber',
+    nickname: '구독자',
+    message: '구독자 테스트 메시지입니다!'
+  }));
+
+  bind('testBroadcasterBtn', () => sendTest('chat', {
+    role: 'broadcaster',
+    nickname: '스트리머',
+    message: '스트리머 테스트 메시지입니다!'
+  }));
+
+  bind('testModBtn', () => sendTest('chat', {
+    role: 'moderator',
+    nickname: '매니저',
+    message: '매니저 테스트 메시지입니다!'
+  }));
+
+  bind('testDonationBtn', () => sendTest('donation', {
+    nickname: '후원테스트',
+    amount: 12000,
+    amountText: '₩12,000',
+    message: '도네이션 테스트 메시지입니다!'
+  }));
+
+  refresh().catch(err => {
+    console.error(err);
+    $('log').textContent = '상태 조회 실패: ' + (err?.message || err);
+  });
+
+  setInterval(() => refresh().catch(() => {}), 3000);
 })();
 </script>
-
 </body>
 </html>

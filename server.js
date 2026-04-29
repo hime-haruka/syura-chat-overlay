@@ -567,25 +567,16 @@ app.post('/api/test/:clientId', async (req, res) => {
           nickname: req.body?.nickname || '테스트유저',
           message: req.body?.message || '테스트 채팅입니다!',
           role: req.body?.role || 'default',
-          badges: []
+          badges: req.body?.badges || []
         }
       };
 
   emitChat(id, payload);
+  io.to(`chat:${id}`).emit('chzzk-event', payload);
+  io.to(id).emit('chat-message', payload);
+  io.to(id).emit('chzzk-event', payload);
 
-  // Compatibility emitters: different previous builds listened to different names.
-  try {
-    io.to(`chat:${id}`).emit('chat-message', payload);
-    io.to(`chat:${id}`).emit('chzzk-event', payload);
-    io.to(id).emit('chat-message', payload);
-    io.to(id).emit('chzzk-event', payload);
-    io.emit('chat-message', payload);
-    io.emit('chzzk-event', payload);
-  } catch (e) {
-    console.error('[test emit failed]', e);
-  }
-
-  res.json({ ok: true, emitted: payload });
+  res.json({ ok: true, clientId: id, emitted: payload });
 });
 
 app.get('/auth/chzzk/start/:clientId', async (req, res) => {
