@@ -471,3 +471,44 @@
 
  
  
+/* === CHZZK original-style safety patch === */
+:root {
+  --frog2: var(--frog1);
+  --lily2: var(--lily1);
+  --lily3: var(--lily1);
+}
+.badgesbox:empty, .badges:empty { display: none; }
+.svgbadge {
+  display: block;
+  width: calc(var(--namesSize) - 2px);
+  height: calc(var(--namesSize) - 2px);
+  max-width: calc(var(--namesSize) - 2px);
+  max-height: calc(var(--namesSize) - 2px);
+  overflow: visible;
+}
+.custombadge .svgbadge,
+.custombadge img {
+  width: calc(var(--namesSize) - 2px) !important;
+  height: calc(var(--namesSize) - 2px) !important;
+  object-fit: contain;
+}
+.messagebox > svg:not(.svgbadge),
+.messagebox .lefthand svg,
+.messagebox .righthand svg {
+  pointer-events: none;
+  overflow: visible;
+}
+.messagebox .message {
+  display: inline-block;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: initial;
+  vertical-align: middle;
+}
+.messagebox {
+  line-height: 1.45;
+}
+.message-row.default .badgescont:has(.badges:empty) { display: none; }
+@supports not selector(:has(*)) {
+  .message-row.default .badgescont { display: none; }
+}

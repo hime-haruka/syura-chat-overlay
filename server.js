@@ -94,7 +94,7 @@ async function renderWidgetCss(config) {
     namesFont: 'Quicksand', msgFont: 'Quicksand', namesBold: '700', msgBold: '700',
     namescolor: '#ffffff', msgcolor: '#47843b', accentcolor: '#dcbb96', alerttext: '#47843b',
     alertsboxcol: '#ffffff', badgesContcolor: '#bce78e', badgescolor: '#ffffff', bordercol: '#97d561',
-    frog1: '#bce78e', frog2: config.frog1 || '#bce78e', lily1: '#f592b4', lilypad: '#82c080',
+    frog1: '#bce78e', frog2: config.frog2 || config.frog1 || '#bce78e', lily1: '#f592b4', lily2: '#f7b9cf', lily3: '#ffd4e3', lilypad: '#82c080',
     alertnames: '#47843b', alerticon: '', msgLimitAmount: 4
   };
   const valueOf = (key) => {
@@ -514,7 +514,7 @@ app.get('/chat/:clientId', async (req, res) => {
   try { config = await loadConfig(clientId); }
   catch { return res.status(404).send('Unknown clientId'); }
   const css = await renderWidgetCss(config);
-  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/original-fragments.js"></script><script src="/static/chat.js"></script></body></html>`);
+  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/chat.js"></script></body></html>`);
 });
 
 app.get('/connect/:clientId', async (req, res) => {
