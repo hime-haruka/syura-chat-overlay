@@ -195,10 +195,26 @@
 
   const socket = window.io ? io({ transports: ['websocket', 'polling'] }) : null;
   if (socket) {
-    socket.on('connect', () => socket.emit('join-chat', { clientId }));
-    socket.emit('join-chat', { clientId });
-    socket.on('chat-message', routeChzzkEvent);
-    socket.on('chzzk-event', routeChzzkEvent);
-    socket.on('donation', emitDonation);
+    const join = () => {
+      socket.emit('join-chat', { clientId });
+      socket.emit('join', { clientId });
+      socket.emit('join', `chat:${clientId}`);
+    };
+
+    socket.on('connect', join);
+    join();
+
+    const receive = (payload) => {
+      console.log('[chzzk-se-adapter] received', payload);
+      routeChzzkEvent(payload);
+    };
+
+    socket.on('chat-message', receive);
+    socket.on('chzzk-event', receive);
+    socket.on('message', receive);
+    socket.on('donation', (payload) => {
+      console.log('[chzzk-se-adapter] donation', payload);
+      routeChzzkEvent({ event: 'donation', data: payload?.data || payload });
+    });
   }
 })();

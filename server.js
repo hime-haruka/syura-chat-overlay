@@ -543,6 +543,7 @@ app.post('/api/logout/:clientId', async (req, res) => { await logoutClient(req.p
 app.post('/api/test/:clientId', async (req, res) => {
   const id = safeClientId(req.params.clientId);
   const type = req.body?.type || 'chat';
+
   const payload = type === 'donation'
     ? {
         event: 'donation',
@@ -571,6 +572,19 @@ app.post('/api/test/:clientId', async (req, res) => {
       };
 
   emitChat(id, payload);
+
+  // Compatibility emitters: different previous builds listened to different names.
+  try {
+    io.to(`chat:${id}`).emit('chat-message', payload);
+    io.to(`chat:${id}`).emit('chzzk-event', payload);
+    io.to(id).emit('chat-message', payload);
+    io.to(id).emit('chzzk-event', payload);
+    io.emit('chat-message', payload);
+    io.emit('chzzk-event', payload);
+  } catch (e) {
+    console.error('[test emit failed]', e);
+  }
+
   res.json({ ok: true, emitted: payload });
 });
 
