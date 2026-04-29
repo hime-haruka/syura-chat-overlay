@@ -309,6 +309,30 @@ function normalizeChat(payload, clientId = null) {
   };
 }
 
+
+function normalizeDonation(payload) {
+  const body = payload?.data && payload.eventType ? payload.data : (payload?.data?.data || payload?.content || payload?.body || payload?.data || payload);
+  const profileRaw = body?.profile || body?.sender || body?.user || {};
+  let profile = profileRaw;
+  if (typeof profileRaw === 'string') {
+    try { profile = JSON.parse(profileRaw); } catch { profile = {}; }
+  }
+  const extras = body?.extras || body?.extra || {};
+  const amount =
+    body?.payAmount ?? body?.amount ?? body?.donationAmount ?? body?.price ?? body?.value ??
+    extras?.payAmount ?? extras?.amount ?? extras?.donationAmount ?? extras?.price ?? extras?.value ?? 0;
+  return {
+    id: body?.messageId || body?.id || body?.donationId || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    type: 'donation',
+    nickname: profile?.nickname || body?.nickname || body?.senderNickname || body?.userNickname || body?.name || '익명',
+    message: body?.content || body?.message || body?.text || extras?.message || '',
+    amount,
+    currency: body?.currency || extras?.currency || '₩',
+    raw: body
+  };
+}
+
+
 async function subscribeChat(clientId, sessionKey, accessToken) {
   setStatus(clientId, 'subscribing', { sessionKey });
   await chzzkFetch(`/open/v1/sessions/events/subscribe/chat?sessionKey=${encodeURIComponent(sessionKey)}`, { method: 'POST' }, accessToken);
@@ -377,6 +401,18 @@ function attachSocketHandlers(clientId, socket, accessToken) {
         nickname: chat.nickname,
         message: chat.message
       });
+      return;
+    }
+
+    if (eventType === 'DONATION' || label === 'DONATION' || payload?.eventType === 'DONATION') {
+      const donation = normalizeDonation(payload);
+      emitChat(clientId, donation);
+      setStatus(clientId, 'receiving_donation', {
+        nickname: donation.nickname,
+        amount: donation.amount,
+        message: donation.message
+      });
+      return;
     }
   };
 
@@ -531,7 +567,26 @@ app.post('/api/stop/:clientId', async (req, res) => { await stopSession(req.para
 app.post('/api/logout/:clientId', async (req, res) => { await logoutClient(req.params.clientId); res.json(await publicStatus(req.params.clientId)); });
 app.post('/api/test/:clientId', async (req, res) => {
   const id = safeClientId(req.params.clientId);
-  emitChat(id, { id: crypto.randomUUID(), nickname: req.body?.nickname || '테스트유저', message: req.body?.message || '테스트 채팅입니다!', role: req.body?.role || 'common_user', badges: [] });
+  const type = req.body?.type || req.body?.event || 'chat';
+  if (type === 'donation') {
+    emitChat(id, {
+      id: crypto.randomUUID(),
+      type: 'donation',
+      nickname: req.body?.nickname || '후원테스트',
+      message: req.body?.message || '도네이션 테스트 메시지입니다!',
+      amount: req.body?.amount || 12000,
+      currency: req.body?.currency || '₩'
+    });
+    return res.json({ ok: true });
+  }
+
+  emitChat(id, {
+    id: crypto.randomUUID(),
+    nickname: req.body?.nickname || '테스트유저',
+    message: req.body?.message || '테스트 채팅입니다!',
+    role: req.body?.role || 'common_user',
+    badges: []
+  });
   res.json({ ok: true });
 });
 
