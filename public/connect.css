@@ -1,0 +1,17 @@
+:root { --bg:#f6f2ff; --card:#fff; --ink:#241a3d; --muted:#6f6388; --primary:#7657dd; --danger:#e04b4b; --ok:#18845d; }
+* { box-sizing:border-box; }
+body { margin:0; background:var(--bg); color:var(--ink); font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Pretendard', sans-serif; }
+.shell { width:min(920px, calc(100% - 32px)); margin:32px auto; display:grid; gap:16px; }
+.card { background:var(--card); border:1px solid rgba(80,50,140,.12); border-radius:20px; padding:24px; box-shadow:0 12px 32px rgba(80,50,140,.08); }
+.hero { display:flex; justify-content:space-between; gap:20px; align-items:center; }
+h1,h2 { margin:0 0 12px; }
+.eyebrow { margin:0 0 8px; color:var(--primary); font-weight:800; font-size:13px; letter-spacing:.04em; text-transform:uppercase; }
+.muted, p { color:var(--muted); line-height:1.55; }
+.button { appearance:none; border:0; display:inline-flex; align-items:center; justify-content:center; min-height:42px; padding:0 18px; border-radius:12px; background:#7657dd; color:#fff; font-weight:800; text-decoration:none; cursor:pointer; margin:4px 6px 4px 0; }
+.button.primary { background:var(--primary); }
+.button.ghost { background:#2c8d68; }
+.button.danger { background:var(--danger); }
+.status { padding:8px 14px; border-radius:999px; font-weight:800; background:#eee8ff; color:var(--primary); white-space:nowrap; }
+.status.running { background:#e6fff4; color:var(--ok); }
+.status.error, .status.revoked { background:#ffe9e9; color:var(--danger); }
+code, pre { display:block; white-space:pre-wrap; word-break:break-all; background:#f0ebfb; padding:16px; border-radius:12px; color:#2e2150; }
