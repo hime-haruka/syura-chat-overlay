@@ -421,7 +421,18 @@ app.get('/chat/:clientId', async (req, res) => {
 
 app.get('/connect/:clientId', async (req, res) => {
   const clientId = safeClientId(req.params.clientId);
-  try { await loadConfig(clientId); } catch { return res.status(404).send('Unknown clientId'); }
+try {
+  await loadConfig(clientId);
+} catch (e) {
+  console.error('[CONFIG LOAD ERROR]', clientId, e);
+  return res.status(404).send(`
+    Unknown clientId: ${clientId}
+    <br>
+    Config path: ${configPath(clientId)}
+    <br>
+    Error: ${e.message}
+  `);
+}
   res.sendFile(path.join(__dirname, 'public', 'connect.html'));
 });
 
