@@ -500,7 +500,7 @@ app.post('/api/test/:clientId', async (req, res) => {
   res.json({ ok: true });
 });
 
-app.get('/auth/chzzk/:clientId', async (req, res) => {
+app.get('/auth/chzzk/start/:clientId', async (req, res) => {
   const clientId = safeClientId(req.params.clientId);
   try { await loadConfig(clientId); } catch { return res.status(404).send('Unknown clientId'); }
   const state = `${clientId}.${crypto.randomBytes(16).toString('hex')}`;
