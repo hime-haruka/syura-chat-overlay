@@ -35,50 +35,55 @@ function safeClientId(id) { return String(id || '').replace(/[^a-zA-Z0-9_-]/g, '
 function tokenPath(clientId) { return path.join(__dirname, 'data', `${clientId}.token.json`); }
 function configPath(clientId) { return path.join(__dirname, 'configs', `${clientId}.json`); }
 
-async function loadConfig(clientId) {
-  const id = safeClientId(clientId);
+function defaultConfig(id) {
+  return {
+    clientId: id,
+    displayName: id,
+    alignMessages: 'bottom',
+    msgHideOpt: false,
+    msgHide: 7,
+    msgLimit: false,
+    msgLimitAmount: 4,
+    namesFont: 'Quicksand',
+    msgFont: 'Quicksand',
+    namesBold: '700',
+    msgBold: '700',
+    namesSize: 16,
+    msgSize: 16,
+    namescolor: '#ffffff',
+    msgcolor: '#47843b',
+    msgback: '#ffffff',
+    textback: 'rgba(173, 143, 255, 0)',
+    badgesContcolor: '#bce78e',
+    badgescolor: '#ffffff',
+    bordercol: '#97d561',
+    frog1: '#bce78e',
+    lily1: '#f592b4',
+    lilypad: '#82c080'
+  };
+}
 
+async function loadConfig(clientId) {
+  const id = safeClientId(clientId || 'pop');
   const candidates = [
     path.join(__dirname, 'configs', `${id}.json`),
-    path.join(__dirname, 'config', `${id}.json`)
+    path.join(process.cwd(), 'configs', `${id}.json`),
+    path.join(__dirname, 'config', `${id}.json`),
+    path.join(process.cwd(), 'config', `${id}.json`)
   ];
 
   for (const p of candidates) {
     try {
       const raw = await fs.readFile(p, 'utf8');
-      return JSON.parse(raw);
-    } catch {}
+      return { ...defaultConfig(id), ...JSON.parse(raw), clientId: id };
+    } catch (e) {
+      // Try next path. If every path fails, fall back to a usable default.
+    }
   }
 
-  if (id === 'pop') {
-    return {
-      clientId: 'pop',
-      displayName: '요미와 하루카',
-      alignMessages: 'bottom',
-      msgHideOpt: false,
-      msgHide: 7,
-      msgLimit: false,
-      msgLimitAmount: 4,
-      namesFont: 'Quicksand',
-      msgFont: 'Quicksand',
-      namesBold: '700',
-      msgBold: '700',
-      namesSize: 16,
-      msgSize: 16,
-      namescolor: '#ffffff',
-      msgcolor: '#47843b',
-      msgback: '#ffffff',
-      textback: 'rgba(173, 143, 255, 0)',
-      badgesContcolor: '#bce78e',
-      badgescolor: '#ffffff',
-      bordercol: '#97d561',
-      frog1: '#bce78e',
-      lily1: '#f592b4',
-      lilypad: '#82c080'
-    };
-  }
-
-  throw new Error(`Config not found for ${id}`);
+  // Do not block client login/OBS because of a missing config file.
+  // This keeps /connect/:clientId and /chat/:clientId usable immediately.
+  return defaultConfig(id);
 }
 
 async function renderWidgetCss(config) {
@@ -450,6 +455,24 @@ async function publicStatus(clientId) {
 
 app.get('/', (_, res) => res.redirect('/connect/pop'));
 
+app.get('/_debug/configs', async (req, res) => {
+  const dirs = [
+    path.join(__dirname, 'configs'),
+    path.join(process.cwd(), 'configs'),
+    path.join(__dirname, 'config'),
+    path.join(process.cwd(), 'config')
+  ];
+  const result = { __dirname, cwd: process.cwd(), dirs: [] };
+  for (const dir of dirs) {
+    try {
+      result.dirs.push({ dir, files: await fs.readdir(dir) });
+    } catch (e) {
+      result.dirs.push({ dir, error: e.message });
+    }
+  }
+  res.json(result);
+});
+
 app.get('/chat/:clientId', async (req, res) => {
   const clientId = safeClientId(req.params.clientId);
   let config;
@@ -461,18 +484,7 @@ app.get('/chat/:clientId', async (req, res) => {
 
 app.get('/connect/:clientId', async (req, res) => {
   const clientId = safeClientId(req.params.clientId);
-try {
-  await loadConfig(clientId);
-} catch (e) {
-  console.error('[CONFIG LOAD ERROR]', clientId, e);
-  return res.status(404).send(`
-    Unknown clientId: ${clientId}
-    <br>
-    Config path: ${configPath(clientId)}
-    <br>
-    Error: ${e.message}
-  `);
-}
+  try { await loadConfig(clientId); } catch { return res.status(404).send('Unknown clientId'); }
   res.sendFile(path.join(__dirname, 'public', 'connect.html'));
 });
 
