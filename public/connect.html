@@ -31,7 +31,7 @@
       <button class="ghost" id="testBtn">일반 테스트</button>
       <button class="ghost" id="testBroadcasterBtn">방장 테스트</button>
       <button class="ghost" id="testModBtn">매니저 테스트</button>
-      <button class="ghost" id="testVipBtn">팔로워 테스트</button>
+      <button class="ghost" id="testFollowerBtn">팔로워 테스트</button>
       <button class="ghost" id="testSubBtn">구독자 테스트</button>
       <button class="ghost" id="testDonationBtn">도네이션 테스트</button>
       <button class="secondary" id="stopBtn">연결 중지</button>
@@ -82,5 +82,80 @@ $('testSubBtn').onclick = async()=>sendTest('subscriber','구독자 테스트 �
 $('testDonationBtn').onclick = async()=>{ await call('POST', `/api/test/${clientId}`, {type:'donation', nickname:'후원테스트', amount:12000, amountText:'₩12,000', message:'도네이션 테스트 메시지입니다!'}); await refresh(); };
 refresh(); setInterval(refresh, 3000);
 </script>
+
+<script>
+(() => {
+  const $ = (id) => document.getElementById(id);
+  const clientInput = $('clientId');
+
+  function getClientId() {
+    return (clientInput && clientInput.value ? clientInput.value : (window.clientId || 'pop')).trim() || 'pop';
+  }
+
+  async function postJson(url, body) {
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body || {})
+    });
+    const text = await res.text();
+    let data = null;
+    try { data = JSON.parse(text); } catch (e) { data = text; }
+    if (!res.ok) throw new Error(typeof data === 'string' ? data : JSON.stringify(data));
+    return data;
+  }
+
+  async function sendOverlayTest(role, message) {
+    const id = getClientId();
+    await postJson(`/api/test/${encodeURIComponent(id)}`, {
+      type: 'chat',
+      role,
+      nickname:
+        role === 'broadcaster' ? '스트리머' :
+        role === 'moderator' || role === 'mod' ? '매니저' :
+        role === 'subscriber' ? '구독자' :
+        role === 'follower' ? '팔로워' : '비팔로워',
+      message
+    });
+  }
+
+  async function sendDonationTest() {
+    const id = getClientId();
+    await postJson(`/api/test/${encodeURIComponent(id)}`, {
+      type: 'donation',
+      nickname: '후원테스트',
+      amount: 12000,
+      amountText: '₩12,000',
+      message: '도네이션 테스트 메시지입니다!'
+    });
+  }
+
+  function bind(id, fn) {
+    const el = $(id);
+    if (!el) return;
+    el.onclick = async () => {
+      try {
+        await fn();
+        if (typeof refresh === 'function') await refresh();
+      } catch (err) {
+        console.error(err);
+        alert('테스트 전송 실패: ' + (err && err.message ? err.message : err));
+      }
+    };
+  }
+
+  bind('testBtn', () => sendOverlayTest('default', '비팔로워 테스트 메시지입니다!'));
+  bind('testMessageBtn', () => sendOverlayTest('default', '비팔로워 테스트 메시지입니다!'));
+  bind('testFollowerBtn', () => sendOverlayTest('follower', '팔로워 테스트 메시지입니다!'));
+  bind('testSubBtn', () => sendOverlayTest('subscriber', '구독자 테스트 메시지입니다!'));
+  bind('testModBtn', () => sendOverlayTest('moderator', '매니저 테스트 메시지입니다!'));
+  bind('testBroadcasterBtn', () => sendOverlayTest('broadcaster', '스트리머 테스트 메시지입니다!'));
+  bind('testDonationBtn', sendDonationTest);
+
+  window.sendOverlayTest = sendOverlayTest;
+  window.sendDonationTest = sendDonationTest;
+})();
+</script>
+
 </body>
 </html>

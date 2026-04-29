@@ -19,6 +19,17 @@ const CHZZK_REDIRECT_URI = process.env.CHZZK_REDIRECT_URI || `${PUBLIC_BASE_URL}
 const OPEN_API = 'https://openapi.chzzk.naver.com';
 const AUTH_PAGE = 'https://chzzk.naver.com/account-interlock';
 
+
+function makeTestId() {
+  try {
+    if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  } catch (e) {}
+  try {
+    return require('crypto').randomUUID();
+  } catch (e) {}
+  return String(Date.now()) + '-' + Math.random().toString(16).slice(2);
+}
+
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
@@ -532,31 +543,35 @@ app.post('/api/logout/:clientId', async (req, res) => { await logoutClient(req.p
 app.post('/api/test/:clientId', async (req, res) => {
   const id = safeClientId(req.params.clientId);
   const type = req.body?.type || 'chat';
-  if (type === 'donation') {
-    emitChat(id, {
-      event: 'donation',
-      data: {
-        id: crypto.randomUUID(),
-        nickname: req.body?.nickname || '후원테스트',
-        amount: req.body?.amount || 12000,
-        amountText: req.body?.amountText || '₩12,000',
-        message: req.body?.message || '도네이션 테스트 메시지입니다!',
-        role: req.body?.role || 'default'
+  const payload = type === 'donation'
+    ? {
+        event: 'donation',
+        type: 'donation',
+        data: {
+          id: makeTestId(),
+          type: 'donation',
+          nickname: req.body?.nickname || '후원테스트',
+          amount: req.body?.amount || 12000,
+          amountText: req.body?.amountText || '₩12,000',
+          message: req.body?.message || '도네이션 테스트 메시지입니다!',
+          role: req.body?.role || 'default'
+        }
       }
-    });
-  } else {
-    emitChat(id, {
-      event: 'chat',
-      data: {
-        id: crypto.randomUUID(),
-        nickname: req.body?.nickname || '테스트유저',
-        message: req.body?.message || '테스트 채팅입니다!',
-        role: req.body?.role || 'default',
-        badges: []
-      }
-    });
-  }
-  res.json({ ok: true });
+    : {
+        event: 'chat',
+        type: 'chat',
+        data: {
+          id: makeTestId(),
+          type: 'chat',
+          nickname: req.body?.nickname || '테스트유저',
+          message: req.body?.message || '테스트 채팅입니다!',
+          role: req.body?.role || 'default',
+          badges: []
+        }
+      };
+
+  emitChat(id, payload);
+  res.json({ ok: true, emitted: payload });
 });
 
 app.get('/auth/chzzk/start/:clientId', async (req, res) => {
