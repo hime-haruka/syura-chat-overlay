@@ -226,16 +226,40 @@ function getEventType(payload) {
 function getSystemType(payload) {
   return payload?.type || payload?.data?.type || payload?.content?.type;
 }
-function normalizeChat(payload) {
+function normalizeChat(payload, clientId = null) {
   const body = payload?.data && payload.eventType ? payload.data : (payload?.data?.data || payload?.content || payload?.body || payload?.data || payload);
-  const profile = body?.profile || body?.sender || {};
+  const profileRaw = body?.profile || body?.sender || body?.user || {};
+  let profile = profileRaw;
+  if (typeof profileRaw === 'string') {
+    try { profile = JSON.parse(profileRaw); } catch { profile = {}; }
+  }
+  const st = clientId ? getState(clientId) : {};
+  const userId = profile?.userIdHash || profile?.userId || profile?.channelId || body?.userId || body?.channelId || body?.senderUserId;
+  let role = profile?.userRoleCode || body?.userRoleCode || body?.role || 'common_user';
+  if (st?.channelId && (userId === st.channelId || profile?.channelId === st.channelId)) role = 'streamer';
+  const badges = [];
+  for (const b of (Array.isArray(profile?.badges) ? profile.badges : [])) badges.push(b);
+  for (const b of (Array.isArray(body?.badges) ? body.badges : [])) badges.push(b);
+  const extras = body?.extras || body?.extra || {};
+  const emotes = [];
+  const emojiPayload = extras?.emojis || extras?.emoticons || body?.emojis || body?.emoticons || [];
+  if (Array.isArray(emojiPayload)) {
+    for (const e of emojiPayload) emotes.push(e);
+  } else if (emojiPayload && typeof emojiPayload === 'object') {
+    for (const [name, val] of Object.entries(emojiPayload)) {
+      if (typeof val === 'string') emotes.push({ name, url: val });
+      else emotes.push({ name, ...(val || {}) });
+    }
+  }
   return {
-    id: body?.messageId || body?.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    nickname: profile?.nickname || body?.nickname || body?.senderNickname || '익명',
+    id: body?.messageId || body?.id || body?.chatMessageId || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    userId,
+    nickname: profile?.nickname || body?.nickname || body?.senderNickname || body?.userNickname || '익명',
     message: body?.content || body?.message || body?.text || '',
-    role: profile?.userRoleCode || body?.userRoleCode || 'common_user',
-    badges: Array.isArray(profile?.badges) ? profile.badges : [],
-    profileImage: profile?.profileImageUrl || profile?.profileImage || '',
+    role,
+    badges,
+    emotes,
+    profileImage: profile?.profileImageUrl || profile?.profileImage || body?.profileImageUrl || '',
     raw: body
   };
 }
@@ -274,7 +298,7 @@ function attachSocketHandlers(clientId, socket, accessToken) {
     }
 
     if (eventType === 'CHAT' || label === 'CHAT' || payload?.eventType === 'CHAT') {
-      const chat = normalizeChat(payload);
+      const chat = normalizeChat(payload, clientId);
       emitChat(clientId, chat);
       setStatus(clientId, 'receiving_chat', { nickname: chat.nickname, message: chat.message });
     }
@@ -409,7 +433,7 @@ app.post('/api/stop/:clientId', async (req, res) => { await stopSession(req.para
 app.post('/api/logout/:clientId', async (req, res) => { await logoutClient(req.params.clientId); res.json(await publicStatus(req.params.clientId)); });
 app.post('/api/test/:clientId', async (req, res) => {
   const id = safeClientId(req.params.clientId);
-  emitChat(id, { id: crypto.randomUUID(), nickname: '테스트유저', message: req.body?.message || '테스트 채팅입니다!', role: 'common_user', badges: [] });
+  emitChat(id, { id: crypto.randomUUID(), nickname: req.body?.nickname || '테스트유저', message: req.body?.message || '테스트 채팅입니다!', role: req.body?.role || 'common_user', badges: [] });
   res.json({ ok: true });
 });
 
