@@ -1,196 +1,64 @@
-const config = window.OVERLAY_CONFIG || {};
-const root = document.documentElement;
+
 const container = document.querySelector('.main-container');
+const clientId = container.dataset.clientId;
+const socket = io();
+socket.emit('join-chat', { clientId });
 
-const DEFAULTS = {
-  alignMessages: 'bottom',
-  msgHideOpt: false,
-  msgHide: 7,
-  msgLimit: false,
-  msgLimitAmount: 4,
-  namesSize: 16,
-  msgSize: 16,
-  namesBold: '700',
-  msgBold: '700',
-  namesFont: 'Quicksand',
-  msgFont: 'Quicksand',
-  namescolor: '#ffffff',
-  msgcolor: '#47843b',
-  msgback: '#ffffff',
-  accentcolor: '#dcbb96',
-  bordercol: '#97d561',
-  badgesContcolor: '#bce78e',
-  badgescolor: '#ffffff',
-  msgDistance: 20,
-  frog1: '#bce78e',
-  lily1: '#f592b4',
-  lilypad: '#82c080'
-};
-
-function val(...keys) {
-  for (const k of keys) if (config[k] !== undefined) return config[k];
-  return undefined;
+function escapeHtml(str){return String(str ?? '').replace(/[&<>'"]/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[s]));}
+function normalizeRole(role){
+  const r = String(role || '').toLowerCase();
+  if(r.includes('streamer') || r.includes('broadcaster') || r.includes('owner')) return 'broadcaster';
+  if(r.includes('manager') || r.includes('moderator') || r === 'mod') return 'mod';
+  if(r.includes('vip')) return 'vip';
+  if(r.includes('subscriber') || r.includes('sub')) return 'subscriber';
+  if(r.includes('first')) return 'first';
+  return 'default';
 }
-
-function applyConfig() {
-  const c = { ...DEFAULTS, ...config };
-  const map = {
-    '--namesSize': `${val('namesSize') ?? c.namesSize}px`,
-    '--msgSize': `${val('msgSize') ?? c.msgSize}px`,
-    '--msgHide': `${val('msgHide') ?? c.msgHide}s`,
-    '--namesBold': val('namesBold') ?? c.namesBold,
-    '--msgBold': val('msgBold') ?? c.msgBold,
-    '--namesFont': `'${val('namesFont') ?? c.namesFont}', sans-serif`,
-    '--msgFont': `'${val('msgFont') ?? c.msgFont}', sans-serif`,
-    '--namescolor': val('namescolor', 'names-color') ?? c.namescolor,
-    '--msgcolor': val('msgcolor', 'msg-color') ?? c.msgcolor,
-    '--msgback': val('msgback', 'msg-back') ?? c.msgback,
-    '--accentcolor': val('accentcolor') ?? c.accentcolor,
-    '--bordercol': val('bordercol', 'bordercolor') ?? c.bordercol,
-    '--badgesContcolor': val('badgesContcolor') ?? c.badgesContcolor,
-    '--badgescolor': val('badgescolor') ?? c.badgescolor,
-    '--msgDistance': `${val('msgDistance') ?? c.msgDistance}px`,
-    '--frog1': val('frog1') ?? c.frog1,
-    '--lily1': val('lily1') ?? c.lily1,
-    '--lilypad': val('lilypad') ?? c.lilypad
-  };
-  Object.entries(map).forEach(([k, v]) => root.style.setProperty(k, v));
-  container.style.justifyContent = (config.alignMessages || 'bottom') === 'top' ? 'flex-start' : 'flex-end';
-}
-
-function escapeHtml(s) {
-  return String(s ?? '').replace(/[&<>'"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#039;', '"': '&quot;' }[ch]));
-}
-
-function renderEmojis(text, emojis = {}) {
-  let out = escapeHtml(text);
-  for (const [key, url] of Object.entries(emojis || {})) {
-    const safeKey = escapeHtml(key);
-    const safeUrl = escapeHtml(url);
-    out = out.split(safeKey).join(`<img class="emote" src="${safeUrl}" alt="${safeKey}">`);
-  }
-  return out;
-}
-
-function roleLabel(role) {
-  if (role === 'streamer') return 'S';
-  if (role === 'streaming_channel_manager') return 'M';
-  if (role === 'streaming_chat_manager') return 'C';
+function badgeSvg(type){
+  const color = 'var(--badgescolor)';
+  if(type === 'broadcaster') return `<svg class="svgbadge" viewBox="0 0 96 96"><path fill="${color}" d="M48 6 60 35 91 37 67 57 75 88 48 71 21 88 29 57 5 37 36 35z"/></svg>`;
+  if(type === 'mod') return `<svg class="svgbadge" viewBox="0 0 96 96"><path fill="${color}" d="M48 5 88 22 82 70 48 91 14 70 8 22z"/></svg>`;
+  if(type === 'vip') return `<svg class="svgbadge" viewBox="0 0 96 96"><path fill="${color}" d="M15 35 32 18 48 36 64 18 81 35 72 78H24z"/></svg>`;
+  if(type === 'subscriber') return `<svg class="svgbadge" viewBox="0 0 96 96"><path fill="${color}" d="M19 11h58l19 25-49 52L0 37z"/></svg>`;
   return '';
 }
-
-function makeBadges(data) {
-  const wrap = document.createElement('span');
-  wrap.className = 'badges';
-  const role = roleLabel(data.role);
-  if (role) {
-    const b = document.createElement('span');
-    b.className = 'role-badge';
-    b.textContent = role;
-    wrap.appendChild(b);
+function renderBadges(msg, roleClass){
+  if(window.CHAT_CONFIG?.badgesDisplay === false || window.CHAT_CONFIG?.badgesShow === false) return '';
+  const badges = [];
+  const built = badgeSvg(roleClass);
+  if(built) badges.push(`<span class="${roleClass} custombadge">${built}</span>`);
+  for(const b of (msg.badges||[]).slice(0,4)){
+    const url = b.imageUrl || b.url || b.badgeImageUrl;
+    if(url) badges.push(`<span class="custombadge"><img alt="" src="${escapeHtml(url)}"/></span>`);
   }
-  if (data.verified) {
-    const b = document.createElement('span');
-    b.className = 'role-badge';
-    b.textContent = '✓';
-    wrap.appendChild(b);
-  }
-  if (Array.isArray(data.badges)) {
-    data.badges.forEach((badge) => {
-      const url = badge.imageUrl || badge.imageURL || badge.url;
-      if (!url) return;
-      const img = document.createElement('img');
-      img.className = 'custombadge';
-      img.src = url;
-      img.alt = '';
-      wrap.appendChild(img);
-    });
-  }
-  return wrap;
+  return badges.join('');
 }
-
-function renderChat(data) {
+function getFragment(roleClass){
+  const frags = window.ORIGINAL_MESSAGE_FRAGMENTS || {};
+  return frags[roleClass] || frags.default || '</span></span><div class="msgcont"><div class="messagebox"><span class="message">';
+}
+function renderChatMessage(msg){
+  const role = normalizeRole(msg.role || msg.userRoleCode || msg.type);
   const row = document.createElement('div');
-  row.className = `message-row animation1 ${escapeHtml(data.role || 'default')}`;
-  row.dataset.msgid = data.id || String(Date.now());
-
-  const namebox = document.createElement('span');
-  namebox.className = 'namebox';
-
-  const badgescont = document.createElement('div');
-  badgescont.className = 'badgescont';
-  const badgesbox = document.createElement('div');
-  badgesbox.className = 'badgesbox';
-  badgesbox.appendChild(makeBadges(data));
-  badgescont.appendChild(badgesbox);
-  namebox.appendChild(badgescont);
-
-  const name = document.createElement('span');
-  name.className = 'name';
-  name.textContent = data.nickname || '익명';
-  namebox.appendChild(name);
-
-  const msgcont = document.createElement('div');
-  msgcont.className = 'msgcont';
-  const messagebox = document.createElement('div');
-  messagebox.className = 'messagebox';
-  const message = document.createElement('span');
-  message.className = 'message';
-  message.innerHTML = renderEmojis(data.message || '', data.emojis || {});
-  messagebox.appendChild(message);
-  msgcont.appendChild(messagebox);
-
-  row.appendChild(namebox);
-  row.appendChild(msgcont);
-  addRow(row);
-}
-
-function renderDonation(data) {
-  renderChat({
-    ...data,
-    role: 'donation',
-    nickname: data.nickname || '후원자',
-    message: `${data.amount ? data.amount + '원 후원! ' : '후원! '}${data.message || ''}`
-  });
-}
-
-function renderSubscription(data) {
-  renderChat({
-    ...data,
-    role: 'subscriber',
-    nickname: data.nickname || '구독자',
-    message: `${data.tierName || '구독'} ${data.month ? data.month + '개월' : ''}`
-  });
-}
-
-function addRow(row) {
-  if ((config.alignMessages || 'bottom') === 'top') container.appendChild(row);
-  else container.appendChild(row);
-
-  if (config.msgHideOpt) {
-    setTimeout(() => {
-      row.classList.add('fadeOut');
-      setTimeout(() => row.remove(), 650);
-    }, Number(config.msgHide || 7) * 1000);
+  row.className = `message-row animation1 ${role}`;
+  row.dataset.sender = msg.userId || msg.nickname || '';
+  row.dataset.msgid = msg.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  const badges = renderBadges(msg, role);
+  const fragment = getFragment(role);
+  row.innerHTML = `<span class="namebox"><div class="badgescont"><div class="badgesbox"><span class="badges">${badges}</span></div></div><span class="name">${escapeHtml(msg.nickname || '익명')}` + fragment + `${escapeHtml(msg.message || '')}</span></div></div></div>`;
+  const align = window.CHAT_CONFIG?.alignMessages || 'bottom';
+  if(align === 'top') container.prepend(row); else container.appendChild(row);
+  if(window.CHAT_CONFIG?.msgHideOpt){ row.classList.add('animationOut'); }
+  if(window.CHAT_CONFIG?.msgFade){
+    for(const el of [...container.children]) el.classList.remove('fadeOut');
+    const target = align === 'top' ? container.lastElementChild : container.firstElementChild;
+    if(target && target !== row) target.classList.add('fadeOut');
   }
-  if (config.msgLimit) {
-    const limit = Number(config.msgLimitAmount || 4);
-    while (container.children.length > limit) container.removeChild(container.firstElementChild);
+  if(window.CHAT_CONFIG?.msgLimit){
+    const limit = Number(window.CHAT_CONFIG.msgLimitAmount||4);
+    while(container.children.length > limit){
+      if(align === 'top') container.removeChild(container.lastElementChild); else container.removeChild(container.firstElementChild);
+    }
   }
 }
-
-function connect() {
-  const ws = new WebSocket(window.WS_URL);
-  ws.addEventListener('message', (event) => {
-    let data;
-    try { data = JSON.parse(event.data); } catch { return; }
-    if (data.type === 'chat') renderChat(data);
-    if (data.type === 'donation') renderDonation(data);
-    if (data.type === 'subscription') renderSubscription(data);
-  });
-  ws.addEventListener('close', () => setTimeout(connect, 2500));
-  ws.addEventListener('error', () => {});
-}
-
-applyConfig();
-connect();
+socket.on('chat-message', renderChatMessage);

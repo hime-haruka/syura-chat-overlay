@@ -1,17 +1,17 @@
 {
   "name": "syura-chzzk-chat-overlay-client-login",
   "version": "2.0.0",
-  "private": true,
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "start": "node server.js",
     "dev": "node server.js"
   },
   "dependencies": {
+    "@socket.io/redis-adapter": "^8.3.0",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
-    "socket.io-client": "2.5.0",
-    "ws": "^8.18.0"
+    "socket.io": "^4.8.1",
+    "socket.io-client": "2.0.3"
   },
   "engines": {
     "node": ">=18"

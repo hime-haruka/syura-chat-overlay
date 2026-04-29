@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>치지직 채팅 연결</title>
+  <style>
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f6fb;color:#222;display:flex;align-items:center;justify-content:center;padding:24px}.card{width:min(760px,100%);background:#fff;border:1px solid #e7e8ef;border-radius:24px;box-shadow:0 16px 48px rgba(35,30,70,.1);padding:28px}.top{display:flex;justify-content:space-between;gap:16px;align-items:flex-start}.badge{padding:6px 10px;border-radius:999px;background:#eef7ef;color:#287339;font-weight:700;font-size:13px}.title{font-size:24px;font-weight:800;margin:0 0 8px}.desc{color:#666;line-height:1.55;margin:0 0 22px}.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:18px 0}.box{padding:14px;border-radius:16px;background:#f8f8fc;border:1px solid #e8e8f0}.label{font-size:12px;color:#777}.value{font-size:14px;font-weight:700;word-break:break-all;margin-top:4px}.actions{display:flex;gap:10px;flex-wrap:wrap;margin:18px 0}button,a.btn{border:0;border-radius:14px;padding:12px 16px;font-weight:800;cursor:pointer;text-decoration:none;display:inline-flex;align-items:center;justify-content:center}.primary{background:#222;color:#fff}.secondary{background:#edeefa;color:#333}.danger{background:#fff0f0;color:#c02020;border:1px solid #ffd4d4}.ghost{background:#f5f5f8;color:#333}.log{margin-top:16px;max-height:280px;overflow:auto;background:#10121a;color:#d7e1ff;border-radius:16px;padding:14px;font-family:ui-monospace,SFMono-Regular,Consolas,monospace;font-size:12px;white-space:pre-wrap}.hint{font-size:13px;color:#777;margin-top:10px}@media(max-width:700px){.grid{grid-template-columns:1fr}.top{display:block}}
+  </style>
+</head>
+<body>
+  <main class="card">
+    <div class="top">
+      <div>
+        <h1 class="title">치지직 채팅 연결</h1>
+        <p class="desc">이 페이지에서 본인 치지직 계정으로 로그인한 뒤 연결을 시작하세요. OBS에는 아래 OBS 주소만 넣으면 됩니다.</p>
+      </div>
+      <div class="badge" id="statusBadge">확인 중</div>
+    </div>
+
+    <div class="grid">
+      <div class="box"><div class="label">클라이언트</div><div class="value" id="clientId">-</div></div>
+      <div class="box"><div class="label">로그인</div><div class="value" id="hasToken">-</div></div>
+      <div class="box"><div class="label">채널</div><div class="value" id="channel">-</div></div>
+      <div class="box"><div class="label">OBS 주소</div><div class="value" id="obsUrl">-</div></div>
+    </div>
+
+    <div class="actions">
+      <a class="btn primary" id="loginBtn" href="#">치지직 로그인</a>
+      <button class="secondary" id="startBtn">연결 시작</button>
+      <button class="ghost" id="testBtn">테스트 채팅 보내기</button>
+      <button class="secondary" id="stopBtn">연결 중지</button>
+      <button class="danger" id="logoutBtn">로그아웃 / 연결 초기화</button>
+    </div>
+
+    <div class="hint">로그아웃은 서버에 저장된 토큰과 현재 세션을 지웁니다. 다른 계정으로 다시 로그인하거나 연결이 꼬였을 때 사용하세요.</div>
+    <div class="log" id="log">로딩 중...</div>
+  </main>
+<script>
+const clientId = location.pathname.split('/').filter(Boolean).pop();
+const $ = (id) => document.getElementById(id);
+$('loginBtn').href = `/auth/chzzk/${clientId}`;
+async function call(method, url, body){
+  const res = await fetch(url,{method,headers:{'Content-Type':'application/json'},body:body?JSON.stringify(body):undefined});
+  const data = await res.json().catch(()=>({}));
+  if(!res.ok) throw data;
+  return data;
+}
+function render(s){
+  $('clientId').textContent = s.clientId;
+  $('hasToken').textContent = s.hasToken ? '로그인됨' : '로그인 필요';
+  $('channel').textContent = s.channelName ? `${s.channelName} (${s.channelId||'-'})` : (s.channelId || '-');
+  $('obsUrl').textContent = s.obsUrl;
+  $('statusBadge').textContent = s.status || 'idle';
+  const lines = [];
+  lines.push(JSON.stringify({clientId:s.clientId, hasToken:s.hasToken, status:s.status, channelId:s.channelId, channelName:s.channelName, sessionKey:s.sessionKey, lastError:s.lastError, obsUrl:s.obsUrl}, null, 2));
+  lines.push('\n--- 최근 로그 ---');
+  for(const d of (s.debug||[])) lines.push(`[${d.at}] ${d.message}${d.extra?`\n${JSON.stringify(d.extra,null,2)}`:''}`);
+  $('log').textContent = lines.join('\n');
+}
+async function refresh(){
+  const s = await call('GET', `/api/status/${clientId}`);
+  render(s);
+}
+$('startBtn').onclick = async()=>{ render(await call('POST', `/api/start/${clientId}`)); };
+$('stopBtn').onclick = async()=>{ render(await call('POST', `/api/stop/${clientId}`)); };
+$('logoutBtn').onclick = async()=>{
+  if(!confirm('로그아웃하면 현재 연결과 저장된 토큰이 초기화됩니다. 계속할까요?')) return;
+  render(await call('POST', `/api/logout/${clientId}`));
+};
+$('testBtn').onclick = async()=>{ await call('POST', `/api/test/${clientId}`, {message:'OBS 테스트 채팅입니다!'}); await refresh(); };
+refresh(); setInterval(refresh, 3000);
+</script>
+</body>
+</html>
