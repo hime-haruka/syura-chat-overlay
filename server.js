@@ -164,7 +164,9 @@ function setError(clientId, error) {
 }
 
 function emitChat(clientId, payload) {
-  io.to(`chat:${clientId}`).emit('chat-message', payload);
+  const id = safeClientId(clientId);
+  io.to(`chat:${id}`).emit('chat-message', payload);
+  io.to(`chat:${id}`).emit('chzzk-event', payload);
 }
 
 function extractApiContent(json) {
@@ -282,40 +284,99 @@ function getEventType(payload) {
 function getSystemType(payload) {
   return payload?.type || payload?.data?.type || payload?.content?.type;
 }
+function parseMaybeJson(value, fallback = {}) {
+  if (!value) return fallback;
+  if (typeof value === 'string') {
+    try { return JSON.parse(value); } catch { return fallback; }
+  }
+  return value;
+}
+
+function normalizeRoleCode(role, profile = {}, body = {}, clientId = null) {
+  const st = clientId ? getState(clientId) : {};
+  const senderChannelId = body?.senderChannelId || profile?.channelId || profile?.userIdHash || body?.userId;
+  const raw = String(role || profile?.userRoleCode || body?.userRoleCode || '').toLowerCase();
+
+  if (st?.channelId && senderChannelId === st.channelId) return 'broadcaster';
+  if (/streamer|broadcaster|owner|creator|channel_owner|host|방장|스트리머/.test(raw)) return 'broadcaster';
+  if (/manager|moderator|mod|staff|운영자|매니저|관리자/.test(raw)) return 'mod';
+  if (/subscriber|subscription|sub|paid|구독/.test(raw)) return 'subscriber';
+  if (/follower|follow|팔로워/.test(raw)) return 'vip';
+  return 'default';
+}
+
+function normalizeEmotes(body) {
+  const out = [];
+  const extras = parseMaybeJson(body?.extras || body?.extra, {});
+  const emojiPayload = extras?.emojis || extras?.emoticons || body?.emojis || body?.emoticons || {};
+
+  if (Array.isArray(emojiPayload)) {
+    for (const e of emojiPayload) {
+      const key = e?.name || e?.token || e?.id;
+      const url = e?.url || e?.imageUrl || e?.image;
+      if (key && url) out.push({ name: key, token: key, url });
+    }
+  } else if (emojiPayload && typeof emojiPayload === 'object') {
+    for (const [key, val] of Object.entries(emojiPayload)) {
+      const url = typeof val === 'string' ? val : (val?.url || val?.imageUrl || val?.image);
+      if (url) out.push({ name: key, token: `{:${key}:}`, url });
+    }
+  }
+  return out;
+}
+
 function normalizeChat(payload, clientId = null) {
   const body = payload?.data && payload.eventType ? payload.data : (payload?.data?.data || payload?.content || payload?.body || payload?.data || payload);
-  const profileRaw = body?.profile || body?.sender || body?.user || {};
-  let profile = profileRaw;
-  if (typeof profileRaw === 'string') {
-    try { profile = JSON.parse(profileRaw); } catch { profile = {}; }
-  }
-  const st = clientId ? getState(clientId) : {};
-  const userId = profile?.userIdHash || profile?.userId || profile?.channelId || body?.userId || body?.channelId || body?.senderUserId;
-  let role = profile?.userRoleCode || body?.userRoleCode || body?.role || 'common_user';
-  if (st?.channelId && (userId === st.channelId || profile?.channelId === st.channelId)) role = 'streamer';
+  const profile = parseMaybeJson(body?.profile || body?.sender || body?.user, {});
+  const senderChannelId = body?.senderChannelId || profile?.channelId || profile?.userIdHash || body?.userId;
+  const role = normalizeRoleCode(profile?.userRoleCode || body?.userRoleCode || body?.role, profile, body, clientId);
   const badges = [];
   for (const b of (Array.isArray(profile?.badges) ? profile.badges : [])) badges.push(b);
   for (const b of (Array.isArray(body?.badges) ? body.badges : [])) badges.push(b);
-  const extras = body?.extras || body?.extra || {};
-  const emotes = [];
-  const emojiPayload = extras?.emojis || extras?.emoticons || body?.emojis || body?.emoticons || [];
-  if (Array.isArray(emojiPayload)) {
-    for (const e of emojiPayload) emotes.push(e);
-  } else if (emojiPayload && typeof emojiPayload === 'object') {
-    for (const [name, val] of Object.entries(emojiPayload)) {
-      if (typeof val === 'string') emotes.push({ name, url: val });
-      else emotes.push({ name, ...(val || {}) });
-    }
-  }
+  const message = String(body?.content ?? body?.message ?? body?.text ?? body?.msg ?? '');
+
   return {
-    id: body?.messageId || body?.id || body?.chatMessageId || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    userId,
+    type: 'chat',
+    id: String(body?.messageTime || body?.messageId || body?.id || body?.chatMessageId || `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+    userId: senderChannelId || profile?.userId || profile?.nickname || 'unknown',
+    channelId: body?.channelId,
+    chatChannelId: body?.chatChannelId,
     nickname: profile?.nickname || body?.nickname || body?.senderNickname || body?.userNickname || '익명',
-    message: body?.content || body?.message || body?.text || '',
+    message,
     role,
     badges,
-    emotes,
+    emotes: normalizeEmotes(body),
     profileImage: profile?.profileImageUrl || profile?.profileImage || body?.profileImageUrl || '',
+    raw: body
+  };
+}
+
+function normalizeDonation(payload, clientId = null) {
+  const body = payload?.data?.data || payload?.content || payload?.body || payload?.data || payload;
+  const profile = parseMaybeJson(body?.profile || body?.sender || body?.user, {});
+  const amount = Number(body?.amount || body?.payAmount || body?.donationAmount || body?.price || body?.pay || 0);
+
+  return {
+    type: 'donation',
+    id: String(body?.messageTime || body?.id || body?.donationId || `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+    nickname: profile?.nickname || body?.nickname || body?.senderNickname || body?.name || '후원',
+    message: String(body?.content ?? body?.message ?? body?.text ?? ''),
+    amount,
+    amountText: body?.amountText || (amount ? `₩${amount.toLocaleString('ko-KR')}` : ''),
+    raw: body
+  };
+}
+
+function normalizeSubscription(payload, clientId = null) {
+  const body = payload?.data?.data || payload?.content || payload?.body || payload?.data || payload;
+  const profile = parseMaybeJson(body?.profile || body?.sender || body?.user, {});
+
+  return {
+    type: 'subscription',
+    id: String(body?.messageTime || body?.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`),
+    nickname: profile?.nickname || body?.nickname || body?.senderNickname || body?.name || '구독자',
+    message: String(body?.content ?? body?.message ?? body?.text ?? '구독했습니다!'),
+    role: 'subscriber',
     raw: body
   };
 }
@@ -359,6 +420,15 @@ function attachSocketHandlers(clientId, socket, accessToken) {
 
         setStatus(clientId, 'chat_subscribed', { sessionKey });
         logState(clientId, 'chat subscribe success', { sessionKey });
+
+        for (const extraEvent of ['donation', 'subscription']) {
+          try {
+            await chzzkFetch(`/open/v1/sessions/events/subscribe/${extraEvent}?sessionKey=${encodeURIComponent(sessionKey)}`, { method: 'POST' }, accessToken);
+            logState(clientId, `${extraEvent} subscribe success`, { sessionKey });
+          } catch (e) {
+            logState(clientId, `${extraEvent} subscribe skipped`, { message: e.message, status: e.status });
+          }
+        }
       } catch (e) {
         logState(clientId, 'chat subscribe failed', {
           message: e.message,
@@ -384,10 +454,22 @@ function attachSocketHandlers(clientId, socket, accessToken) {
     if (eventType === 'CHAT' || label === 'CHAT' || payload?.eventType === 'CHAT') {
       const chat = normalizeChat(payload, clientId);
       emitChat(clientId, chat);
-      setStatus(clientId, 'receiving_chat', {
-        nickname: chat.nickname,
-        message: chat.message
-      });
+      setStatus(clientId, 'receiving_chat', { nickname: chat.nickname, message: chat.message });
+      return;
+    }
+
+    if (eventType === 'DONATION' || label === 'DONATION' || payload?.eventType === 'DONATION') {
+      const donation = normalizeDonation(payload, clientId);
+      emitChat(clientId, donation);
+      setStatus(clientId, 'receiving_donation', { nickname: donation.nickname, amount: donation.amountText, message: donation.message });
+      return;
+    }
+
+    if (eventType === 'SUBSCRIPTION' || label === 'SUBSCRIPTION' || payload?.eventType === 'SUBSCRIPTION') {
+      const sub = normalizeSubscription(payload, clientId);
+      emitChat(clientId, sub);
+      setStatus(clientId, 'receiving_subscription', { nickname: sub.nickname, message: sub.message });
+      return;
     }
   };
 
@@ -525,7 +607,7 @@ app.get('/chat/:clientId', async (req, res) => {
   try { config = await loadConfig(clientId); }
   catch { return res.status(404).send('Unknown clientId'); }
   const css = await renderWidgetCss(config);
-  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/se-original.js"></script><script src="/static/chzzk-se-adapter.js"></script></body></html>`);
+  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/original-fragments.js"></script><script src="/static/live-overlay.js"></script></body></html>`);
 });
 
 app.get('/connect/:clientId', async (req, res) => {
@@ -546,36 +628,24 @@ app.post('/api/test/:clientId', async (req, res) => {
 
   const payload = type === 'donation'
     ? {
-        event: 'donation',
         type: 'donation',
-        data: {
-          id: makeTestId(),
-          type: 'donation',
-          nickname: req.body?.nickname || '후원테스트',
-          amount: req.body?.amount || 12000,
-          amountText: req.body?.amountText || '₩12,000',
-          message: req.body?.message || '도네이션 테스트 메시지입니다!',
-          role: req.body?.role || 'default'
-        }
+        id: makeTestId(),
+        nickname: req.body?.nickname || '후원테스트',
+        amount: req.body?.amount || 12000,
+        amountText: req.body?.amountText || '₩12,000',
+        message: req.body?.message || '도네이션 테스트 메시지입니다!'
       }
     : {
-        event: 'chat',
-        type: 'chat',
-        data: {
-          id: makeTestId(),
-          type: 'chat',
-          nickname: req.body?.nickname || '테스트유저',
-          message: req.body?.message || '테스트 채팅입니다!',
-          role: req.body?.role || 'default',
-          badges: req.body?.badges || []
-        }
+        type: type === 'subscription' ? 'subscription' : 'chat',
+        id: makeTestId(),
+        nickname: req.body?.nickname || '테스트유저',
+        message: req.body?.message || '테스트 채팅입니다!',
+        role: req.body?.role || (type === 'subscription' ? 'subscriber' : 'default'),
+        badges: req.body?.badges || [],
+        emotes: []
       };
 
   emitChat(id, payload);
-  io.to(`chat:${id}`).emit('chzzk-event', payload);
-  io.to(id).emit('chat-message', payload);
-  io.to(id).emit('chzzk-event', payload);
-
   res.json({ ok: true, clientId: id, emitted: payload });
 });
 

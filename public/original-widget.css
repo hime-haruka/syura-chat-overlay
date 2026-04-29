@@ -490,3 +490,91 @@
   fill: #ffffff !important;
   stroke: #ffffff !important;
 }
+
+/* === live overlay fit patch: keeps original classes/SVG, only fixes full-browser viewport === */
+:root {
+  --frog2: var(--frog1);
+  --lily2: #f7b9cf;
+  --lily3: #ffd4e3;
+}
+
+.main-container {
+  width: 390px;
+  max-width: 390px;
+  min-height: 100%;
+  padding: 24px 0 18px 22px;
+  justify-content: flex-end;
+}
+
+.message-row {
+  width: 360px;
+  max-width: 360px;
+  margin-bottom: 18px;
+  padding-bottom: 12px;
+}
+
+.msgcont {
+  width: 330px;
+  max-width: 330px;
+}
+
+.messagebox {
+  max-width: 330px;
+  min-height: 46px;
+}
+
+.message-row.default .badgescont {
+  display: none !important;
+}
+
+.badgesbox:empty,
+.badges:empty {
+  display: none !important;
+}
+
+.svgbadge,
+.svgbadge *,
+.custombadge svg,
+.custombadge svg * {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.message-row.alert-row {
+  width: 360px;
+  max-width: 360px;
+  padding-bottom: 0;
+  margin-bottom: 22px;
+}
+
+.message-row.alert-row .alertcont {
+  width: 100%;
+  left: 0;
+  opacity: 1;
+}
+
+.message-row.alert-row .alerttextwrap {
+  min-width: 235px;
+  max-width: 300px;
+  min-height: 34px;
+  padding: 6px 38px;
+  border-radius: 999px;
+  border: 3px solid var(--bordercol);
+  background: #ffffff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.message-row.alert-row .alertlily {
+  height: 44px;
+  left: -20px;
+  bottom: -10px;
+}
+
+.message-row.alert-row .alertlily.right {
+  left: auto;
+  right: -20px;
+  bottom: -10px;
+  transform: scaleX(-1);
+}
