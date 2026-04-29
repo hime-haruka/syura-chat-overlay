@@ -1,18 +1,19 @@
 {
-  "name": "syura-chzzk-chat-overlay",
-  "version": "1.0.0",
+  "name": "syura-chzzk-chat-overlay-server-login",
+  "version": "2.0.0",
   "private": true,
   "type": "module",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js",
-    "receiver": "node receiver/receiver.js",
-    "receiver:test": "TEST_MODE=true node receiver/receiver.js"
+    "dev": "node server.js"
   },
   "dependencies": {
     "dotenv": "^16.4.7",
     "express": "^4.19.2",
     "socket.io-client": "2.0.3",
     "ws": "^8.18.0"
+  },
+  "engines": {
+    "node": ">=18"
   }
 }
