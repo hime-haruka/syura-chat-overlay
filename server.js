@@ -37,8 +37,48 @@ function configPath(clientId) { return path.join(__dirname, 'configs', `${client
 
 async function loadConfig(clientId) {
   const id = safeClientId(clientId);
-  const raw = await fs.readFile(configPath(id), 'utf8');
-  return JSON.parse(raw);
+
+  const candidates = [
+    path.join(__dirname, 'configs', `${id}.json`),
+    path.join(__dirname, 'config', `${id}.json`)
+  ];
+
+  for (const p of candidates) {
+    try {
+      const raw = await fs.readFile(p, 'utf8');
+      return JSON.parse(raw);
+    } catch {}
+  }
+
+  if (id === 'pop') {
+    return {
+      clientId: 'pop',
+      displayName: '요미와 하루카',
+      alignMessages: 'bottom',
+      msgHideOpt: false,
+      msgHide: 7,
+      msgLimit: false,
+      msgLimitAmount: 4,
+      namesFont: 'Quicksand',
+      msgFont: 'Quicksand',
+      namesBold: '700',
+      msgBold: '700',
+      namesSize: 16,
+      msgSize: 16,
+      namescolor: '#ffffff',
+      msgcolor: '#47843b',
+      msgback: '#ffffff',
+      textback: 'rgba(173, 143, 255, 0)',
+      badgesContcolor: '#bce78e',
+      badgescolor: '#ffffff',
+      bordercol: '#97d561',
+      frog1: '#bce78e',
+      lily1: '#f592b4',
+      lilypad: '#82c080'
+    };
+  }
+
+  throw new Error(`Config not found for ${id}`);
 }
 
 async function renderWidgetCss(config) {
