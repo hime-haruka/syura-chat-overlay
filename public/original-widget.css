@@ -1,5 +1,4 @@
-:root {
-  --namesSize: 16px;
+:root px;
   --msgSize: 16px;
   --msgback: #ffffff;
   --namesBold: 700;
@@ -19,163 +18,51 @@
 }
 
 
-.alertlily {
- position: absolute;
- width: auto;
- height: 47px;
- left: -15px;
- bottom: -7px;
+.alertlily 
+
+.lilymain 
+
+.lilyvip 
+
+.lefthand 
+
+.righthand 
+
+@keyframes wave 
+  20%, 30% 
 }
 
-.lilymain {
- position: absolute;
- width: 44px;
- height: auto;
- left: -15px;
- top: -22px;
+@keyframes wave2 
+  20%, 30% 
 }
 
-.lilyvip {
- position: absolute;
- width: 44px;
- height: auto;
- right: -2px;
- top: -22px;
- transform: scaleX(-1);
+@keyframes spin 
+  to 
 }
 
-.lefthand {
- position: absolute;
- width: 24px;
- height: 43px;
- right: 28px;
- top: -31px;
- transform-origin: 21px 34px;
- animation: wave 6s linear infinite;
+.lefthandflower 
+
+.lefthandw 
+
+.lilysub 
+
+@keyframes float 
+  to 
 }
 
-.righthand {
- position: absolute;
- width: 24px;
- height: 43px;
- right: -14px;
- top: -31px;
- transform-origin: 3px 34px;
- animation: wave2 6s linear infinite;
-}
+.lilymod 
 
-@keyframes wave {
-  0%, 15%, 25%, 35% {
-  transform: rotate(0deg);
-  }
-  20%, 30% {
-  transform: rotate(15deg);
-  }
-}
+.lilyfrog 
 
-@keyframes wave2 {
-  0%, 15%, 25%, 35% {
-  transform: rotate(0deg);
-  }
-  20%, 30% {
-  transform: rotate(-15deg);
-  }
-}
+.frogsub 
 
-@keyframes spin {
-  from {
-  transform: rotate(0deg);
-  }
-  to {
-  transform: rotate(360deg);
-  }
-}
-
-.lefthandflower {
- position: absolute;
- width: auto;
- height: 14px;
- left: 0px;
- top: 0px;
- z-index: 10;
- animation: spin 20s linear infinite;
-}
-
-.lefthandw {
- position: absolute;
- width: 20px;
- height: auto;
- right: 0px;
- bottom: 0px;
-}
-
-.lilysub {
- position: absolute;
- width: 58px;
- height: auto;
- right: 50px;
- top: -11px;
- animation: float 3s linear infinite alternate;
-}
-
-@keyframes float {
-  from {
-  transform: translateY(-3px);
-  }
-  to {
-  transform: translateY(3px);
-  }
-}
-
-.lilymod {
- position: absolute;
- width: 54px;
- height: auto;
- left: 4px;
- bottom: -13px;
- animation: float 3s linear infinite alternate;
-}
-
-.lilyfrog {
- position: absolute;
- width: 62px;
- height: auto;
- right: -8px;
- top: -2px;
-  z-index: -2;
-}
-
-.frogsub {
- position: absolute;
- width: 45px;
- height: auto;
- right: -2px;
- top: -19px;
-}
-
-.animationOut {
-    animation: fadeOut 0.5s ease 7s forwards;
+.animationOut s forwards;
     -webkit-animation: fadeOut 0.5s ease 7s forwards;
 }
 
-.badgescont {
-  position: absolute;
-  transform: translateX(100%);
-  right: -7px;
-  top: 0px;
-  width: fit-content;
-  height: fit-content;
-}
+.badgescont 
 
-.badgesbox {
-  width: fit-content;
-  display: block;
-  position: relative;
-  z-index: 3; 
-  text-shadow: 0px;
-  overflow: hidden; 
-  overflow: visible;
-  background: #bce78e;
+.badgesbox ;
   height: 16px;
   font-size: 16px;
   font-weight: 300;
@@ -187,26 +74,12 @@
 
 
 
-.fadeOut {
-  animation: fadeOut 0.5s ease forwards;
-  -webkit-animation: fadeOut 0.5s ease forwards;
+.fadeOut 
+
+.badges px - 2px);
 }
 
-.badges {
-  position: relative;
-  display: inline-flex;
-  flex-direction: row-reverse;
-  justify-content: flex-end;
-  transform: translateY(-50%);
-  opacity: 1;
-  top: 50%;
-  height: calc(16px - 2px);
-}
-
-.custombadge {
-  display: inline-block;
-  position: relative;
-  height: calc(16px - 2px);
+.custombadge px - 2px);
   top: 50%;
   transform: translateY(-50%);
   left: 0;
@@ -216,10 +89,7 @@
   vertical-align: top;
 }
 
-.custombadge svg {
-  display: inline-block;
-  position: absolute;
-  height: calc(16px - 2px);
+.custombadge svg px - 2px);
   width: calc(16px - 2px);
   z-index: 3; 
   top: 0px;
@@ -228,197 +98,72 @@
  /* border: 1px solid transparent; */
 }
 
-.custombadge img {
-  display: inline-block;
-  position: absolute;
-  width: calc(16px - 2px);
+.custombadge img px - 2px);
   z-index: 3; 
   top: 0px;
   left: 0;
 }
 
-@keyframes badgeAnim {
-   100% {
-     transform: translateY(-50%);
-   }
+@keyframes badgeAnim 
 } 
 
-.alertcont {
-  width: calc(100% - 20px);
-  left: 20px;
-  height: fit-content;
-  display: block;
-  position: relative;
-  top: 0px;
-  text-align: center;
-  z-index: 1;
-  transform-origin: left top;
-  font-family: var(--msgFont);
-  color: var(--alerttext);
-  animation: fadeIn .55s linear 0.3s forwards;
-  opacity: 0;
-}
+.alertcont 
 
- .alerttextwrap {
-  position: relative;
-  width: fit-content;
-  top: 0;
-  left: 50%;
-  z-index: 10;
-  transform: translateX(-50%);
-  padding: 7px 65px;
-  border-radius: 30px;
-  background: #ffffff;
+ .alerttextwrap ;
   border: 3px solid #97d561;
   text-align: center;
  }
 
-.alerttext {
-  position: relative;
-  top: 0px;
-  font-weight: 700;
+.alerttext ;
   z-index: 5;
   font-size: 16px;
   margin-left: 4px;
 }
 
-.alertName {
-  font-size: 16px;
+.alertName px;
   font-weight: 700;
   color: #47843b;
 }
 
 
-* {
-  box-sizing: border-box;
-}
+* 
 
- .out { 
-  height: 100%; width: 100%; overflow: hidden; 
-  -webkit-mask-image: -webkit-gradient(linear, left 16%, left top, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
-}
+ .out 
 
-.outdown { 
-  height: 100%; width: 100%; overflow: hidden; 
-  -webkit-mask-image: -webkit-gradient(linear, left 84%, left bottom, from(rgba(0,0,0,1)), to(rgba(0,0,0,0)));
-  -webkit-mask-position: 100% 100%;
-}
+.outdown 
  
- .default {
-   background-repeat: no-repeat;
-   background-position: center;
-   background-size: cover;
-   position: relative;
-   height: 50px;
-   vertical-align: middle;
- }
+ .default 
  
- .large {
-   background-repeat: no-repeat;
-   background-position: center;
-   background-size: cover;
-   position: relative;
-   height: 75px;
-   vertical-align: middle;
- }
+ .large 
  
- .nolarge {
-   background-repeat: no-repeat;
-   background-position: center;
-   background-size: cover;
-   position: relative;
-   height: 40px;
-   vertical-align: middle;
- }
+ .nolarge 
  
- .main-container {
-   display: flex;
-   height:98%;
-   width:98%;
-   flex-direction: column;
-   justify-content: flex-end;
-   text-align: left;
- }
+ .main-container 
  
  
- .fadeOut {
-   animation: fadeOut 0.5s ease forwards;
-   -webkit-animation: fadeOut 0.5s ease forwards;
- }
+ .fadeOut 
  
-.pronounsDiv {
- font-size: calc(var(--namesSize) - 5px); 
- color: var(--namescolor);
- margin-left: 7px;
-}
+.pronounsDiv 
  
 
- .message-row {
-   position: relative;
-   flex: 0 0 auto;
-   width: 100%;
-   display: block;
-   word-wrap: break-word;
-   word-break: break-word;
-   overflow: visible;
-   padding-bottom: 30px;
- }
+ .message-row 
  
- .emote {
-   background-repeat: no-repeat;
-   background-position: center;
-   background-size: cover;
-   position: relative;
-   height: 1.5em;
- }
+ .emote 
  
- @keyframes fadeOut {
-    0% {
-     opacity: 1;
-    }
-    100% {
-     opacity: 0;
-    }
+ @keyframes fadeOut 
+    100% 
  } 
  
  
- @keyframes fadeIn {
-  0% {
-    opacity: 0;
-  }
-  100% {
-    opacity: 1;
-  }
+ @keyframes fadeIn 
+  100% 
 } 
  
- .message {
-   width: 80%;
-   top: 0px;
-   position: relative;
- 
-   text-overflow: ellipsis;
-   overflow: hidden;
-   z-index: 10;
- }
+ .message 
 
- .name {
-   position: relative;
-   left: 0;
-   display: inline-block;
-   color: var(--namescolor);
- }
+ .name 
  
- .namebox { 
-  width: fit-content;
-  position: relative;
-  z-index: 33; 
-  font-family: var(--namesFont);
-  font-size: var(--namesSize);
-  text-shadow: 0px; 
-  overflow: visible;
-  font-weight: var(--namesBold);
-  color: var(--namescolor);
-  background: #97d561;
+ .namebox ;
   left: 53px;
   top: 0px;
   margin-right: 20px;
@@ -429,21 +174,7 @@
   animation: fadeIn .3s ease .3s forwards;
  } 
 
- .messagebox {
-  width: 100%;
-  text-overflow: ellipsis;
- /* padding: 7px;*/
-  position: relative;
-  z-index: 2;
-  font-family: var(--msgFont);
-  font-size: var(--msgSize);
-  overflow: visible;
-  z-index: 9;
-  min-width: 80px;
-  color: var(--msgcolor);
-  font-weight: var(--msgBold);
-  top: 0px;
-  background: #ffffff;
+ .messagebox ;
   padding: 16px 45px 15px 35px;
   animation: fadeIn .55s linear 0.4s forwards;
   opacity: 0;
@@ -452,69 +183,190 @@
  }
 
 
-@keyframes msgAnim {
-   100% {
-     transform: translateY(0%);
-   }
+@keyframes msgAnim 
 } 
  
- .msgcont {
-  width: calc(100% - 40px);
-  left: 20px;
-  clear: both;
-  display: block;
-  position: relative;
-  top: -10px;
-  z-index: 1;
-  transform-origin: left top;
- }
+ .msgcont
 
-/* === CHZZK original-style fixed patch v2 === */
+/* === CHZZK exact original layout patch === */
 :root {
-  --namesSize: 16px;
-  --msgSize: 16px;
-  --msgback: #ffffff;
-  --namesBold: 700;
-  --msgBold: 700;
-  --textback: rgba(173, 143, 255, 0);
-  --namesFont: 'Quicksand', sans-serif;
-  --msgFont: 'Quicksand', sans-serif;
-  --namescolor: #ffffff;
-  --outlinecol: #dcbb96;
-  --accentcolor: #dcbb96;
-  --msgcolor: #47843b;
-  --alerttext: #47843b;
-  --msgHide: 7s;
-  --alertback: #ffffff;
-  --badgescolor: #ffffff;
   --frog1: #bce78e;
   --frog2: #bce78e;
   --lily1: #f592b4;
-  --lily2: #f7b4ce;
-  --lily3: #ffd3e2;
+  --lily2: #f7b9cf;
+  --lily3: #ffd4e3;
   --lilypad: #82c080;
+  --badgescolor: #ffffff;
+  --bordercol: #97d561;
 }
-.main-container { padding-left: 20px; padding-bottom: 18px; width: 560px; max-width: 560px; gap: 0; }
-.message-row { width: 520px; max-width: 520px; margin: 0 0 14px 0; padding: 0 0 18px 0; overflow: visible; }
-.namebox { left: 38px; top: 0; margin: 0 0 2px 0; padding: 7px 24px; line-height: 1.1; }
-.msgcont { width: 520px; max-width: 520px; left: 20px; top: -6px; margin: 0; }
-.messagebox { width: 100%; max-width: 520px; min-height: 46px; line-height: 1.45; padding: 15px 48px 14px 35px; border-radius: 19px; }
-.messagebox .message { display: inline-block; width: auto; max-width: 100%; overflow: visible; text-overflow: initial; vertical-align: middle; }
-.badgescont { right: -5px; top: 50%; transform: translate(100%, -50%); }
-.badgesbox { background: #bce78e; height: var(--namesSize); min-width: var(--namesSize); padding: 3px 6px; border-radius: 999px; }
-.badgesbox:empty, .badges:empty { display: none; }
-.svgbadge { display: block; width: calc(var(--namesSize) - 2px); height: calc(var(--namesSize) - 2px); max-width: calc(var(--namesSize) - 2px); max-height: calc(var(--namesSize) - 2px); overflow: visible; }
-.svgbadge path, .custombadge svg path { fill: #ffffff !important; }
-.custombadge .svgbadge, .custombadge img { width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; object-fit: contain; }
-.default .badgescont { display: none !important; }
-.follower .badgescont, .subscriber .badgescont, .broadcaster .badgescont, .mod .badgescont { display: block; }
-.messagebox > svg:not(.svgbadge), .messagebox .lefthand svg, .messagebox .righthand svg { pointer-events: none; overflow: visible; }
-.donation-row { width: 520px; max-width: 520px; margin: 2px 0 16px 0; padding: 0 0 8px 0; text-align: center; }
-.donation-pill { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 250px; max-width: 410px; min-height: 32px; padding: 6px 36px; border-radius: 999px; background: #ffffff; border: 3px solid #97d561; box-shadow: -3px 4px 0 #97d561; color: #47843b; font-family: var(--msgFont); font-size: var(--msgSize); font-weight: var(--msgBold); line-height: 1.1; opacity: 0; animation: fadeIn .45s linear .2s forwards; }
-.donation-text b { font-weight: var(--namesBold); }
-.donation-deco { position: absolute; width: 28px; height: 22px; border-radius: 50% 50% 45% 45%; background: #82c080; bottom: -8px; }
-.donation-deco::before { content: ''; position: absolute; width: 17px; height: 17px; left: 4px; top: -12px; border-radius: 70% 10% 70% 10%; background: #f592b4; transform: rotate(35deg); }
-.donation-deco::after { content: ''; position: absolute; width: 12px; height: 12px; right: 3px; top: -7px; border-radius: 70% 10% 70% 10%; background: #ffd3e2; transform: rotate(-25deg); }
-.donation-deco-left { left: -12px; }
-.donation-deco-right { right: -12px; transform: scaleX(-1); }
-.donation-msgbox { position: relative; width: 420px; margin: 9px auto 0; padding: 13px 28px; border-radius: 18px; background: #ffffff; box-shadow: -3px 5px 0 #97d561; color: #47843b; font-family: var(--msgFont); font-size: var(--msgSize); font-weight: var(--msgBold); text-align: left; opacity: 0; animation: fadeIn .45s linear .28s forwards; }
+
+html,
+body {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  background: transparent;
+  overflow: hidden;
+}
+
+.main-container {
+  width: 390px;
+  max-width: 390px;
+  height: 100%;
+  padding: 26px 0 18px 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  text-align: left;
+}
+
+.message-row {
+  width: 360px;
+  max-width: 360px;
+  position: relative;
+  flex: 0 0 auto;
+  display: block;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow: visible;
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.message-row:last-child {
+  margin-bottom: 0;
+}
+
+.namebox {
+  left: 53px;
+  top: 0;
+  margin-right: 20px;
+  margin-bottom: 0;
+}
+
+.msgcont {
+  width: 330px;
+  max-width: 330px;
+  left: 20px;
+  top: -10px;
+  clear: both;
+  display: block;
+  position: relative;
+  z-index: 1;
+  transform-origin: left top;
+}
+
+.messagebox {
+  width: 100%;
+  max-width: 330px;
+  min-height: 46px;
+  line-height: 1.45;
+}
+
+.messagebox .message {
+  display: inline-block;
+  width: auto;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: initial;
+  vertical-align: middle;
+  white-space: normal;
+}
+
+/* Default/non-follower rows must not reserve an empty badge bubble. */
+.message-row.default .badgescont,
+.message-row.nonFollower .badgescont,
+.message-row.common_user .badgescont {
+  display: none !important;
+}
+
+/* Keep original custom badge shapes, but force white icon fill. */
+.svgbadge,
+.svgbadge *,
+.custombadge svg,
+.custombadge svg * {
+  fill: #ffffff !important;
+  stroke: #ffffff !important;
+}
+
+.badgesbox:empty,
+.badges:empty {
+  display: none !important;
+}
+
+.svgbadge {
+  display: block;
+  width: calc(var(--namesSize) - 2px);
+  height: calc(var(--namesSize) - 2px);
+  max-width: calc(var(--namesSize) - 2px);
+  max-height: calc(var(--namesSize) - 2px);
+  overflow: visible;
+}
+
+.custombadge .svgbadge,
+.custombadge img {
+  width: calc(var(--namesSize) - 2px) !important;
+  height: calc(var(--namesSize) - 2px) !important;
+  object-fit: contain;
+}
+
+/* Donation / cheer alert: original-style pill, not a message card. */
+.message-row.alert-row {
+  width: 360px;
+  max-width: 360px;
+  padding-bottom: 0;
+  margin-bottom: 22px;
+}
+
+.message-row.alert-row .alertcont {
+  width: 100%;
+  left: 0;
+  opacity: 1;
+  animation: fadeIn .55s linear .1s forwards;
+}
+
+.message-row.alert-row .alerttextwrap {
+  min-width: 235px;
+  max-width: 290px;
+  height: 34px;
+  padding: 6px 38px;
+  border-radius: 999px;
+  border: 3px solid var(--bordercol);
+  background: #ffffff;
+  box-shadow: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.message-row.alert-row .alertName,
+.message-row.alert-row .alerttext {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--msgcolor);
+  margin: 0;
+}
+
+.message-row.alert-row .alertlily {
+  width: auto;
+  height: 44px;
+  left: -20px;
+  bottom: -10px;
+}
+
+.message-row.alert-row .alertlily.right {
+  left: auto;
+  right: -20px;
+  bottom: -10px;
+  transform: scaleX(-1);
+}
+
+/* Do not let SVGs escape to page-size if browser falls back oddly. */
+.messagebox > svg,
+.alerttextwrap > svg,
+.lefthand svg,
+.righthand svg {
+  pointer-events: none;
+  overflow: visible;
+}

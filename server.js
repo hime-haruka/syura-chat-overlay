@@ -101,7 +101,7 @@ async function renderWidgetCss(config) {
     const clean = String(key).trim();
     return config[clean] ?? config[clean.replace(/-([a-z])/g, (_,c)=>c.toUpperCase())] ?? fallback[clean] ?? '';
   };
-  const css = template.replace(/\{([a-zA-Z0-9_-]+)\}/g, (_, key) => String(valueOf(key)));
+  const css = template.replace(/\{([^}]+)\}/g, (_, key) => String(valueOf(key)));
   return `@import url('https://fonts.googleapis.com/css2?family=${encodeURIComponent(config.namesFont || 'Quicksand')}:wght@400;500;600;700&display=swap');\nhtml,body{width:100%;height:100%;margin:0;background:transparent;overflow:hidden;}\n${css}`;
 }
 async function readJsonMaybe(p) {
@@ -309,30 +309,6 @@ function normalizeChat(payload, clientId = null) {
   };
 }
 
-
-function normalizeDonation(payload) {
-  const body = payload?.data && payload.eventType ? payload.data : (payload?.data?.data || payload?.content || payload?.body || payload?.data || payload);
-  const profileRaw = body?.profile || body?.sender || body?.user || {};
-  let profile = profileRaw;
-  if (typeof profileRaw === 'string') {
-    try { profile = JSON.parse(profileRaw); } catch { profile = {}; }
-  }
-  const extras = body?.extras || body?.extra || {};
-  const amount =
-    body?.payAmount ?? body?.amount ?? body?.donationAmount ?? body?.price ?? body?.value ??
-    extras?.payAmount ?? extras?.amount ?? extras?.donationAmount ?? extras?.price ?? extras?.value ?? 0;
-  return {
-    id: body?.messageId || body?.id || body?.donationId || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
-    type: 'donation',
-    nickname: profile?.nickname || body?.nickname || body?.senderNickname || body?.userNickname || body?.name || '익명',
-    message: body?.content || body?.message || body?.text || extras?.message || '',
-    amount,
-    currency: body?.currency || extras?.currency || '₩',
-    raw: body
-  };
-}
-
-
 async function subscribeChat(clientId, sessionKey, accessToken) {
   setStatus(clientId, 'subscribing', { sessionKey });
   await chzzkFetch(`/open/v1/sessions/events/subscribe/chat?sessionKey=${encodeURIComponent(sessionKey)}`, { method: 'POST' }, accessToken);
@@ -401,18 +377,6 @@ function attachSocketHandlers(clientId, socket, accessToken) {
         nickname: chat.nickname,
         message: chat.message
       });
-      return;
-    }
-
-    if (eventType === 'DONATION' || label === 'DONATION' || payload?.eventType === 'DONATION') {
-      const donation = normalizeDonation(payload);
-      emitChat(clientId, donation);
-      setStatus(clientId, 'receiving_donation', {
-        nickname: donation.nickname,
-        amount: donation.amount,
-        message: donation.message
-      });
-      return;
     }
   };
 
@@ -550,7 +514,7 @@ app.get('/chat/:clientId', async (req, res) => {
   try { config = await loadConfig(clientId); }
   catch { return res.status(404).send('Unknown clientId'); }
   const css = await renderWidgetCss(config);
-  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="out"><div class="main-container" data-client-id="${clientId}"></div></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/original-fragments.js"></script><script src="/static/chat.js"></script></body></html>`);
+  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/original-fragments.js"></script><script src="/static/chat.js"></script></body></html>`);
 });
 
 app.get('/connect/:clientId', async (req, res) => {
@@ -567,26 +531,28 @@ app.post('/api/stop/:clientId', async (req, res) => { await stopSession(req.para
 app.post('/api/logout/:clientId', async (req, res) => { await logoutClient(req.params.clientId); res.json(await publicStatus(req.params.clientId)); });
 app.post('/api/test/:clientId', async (req, res) => {
   const id = safeClientId(req.params.clientId);
-  const type = req.body?.type || req.body?.event || 'chat';
+  const type = req.body?.type || 'chat';
   if (type === 'donation') {
     emitChat(id, {
       id: crypto.randomUUID(),
       type: 'donation',
       nickname: req.body?.nickname || '후원테스트',
-      message: req.body?.message || '도네이션 테스트 메시지입니다!',
       amount: req.body?.amount || 12000,
-      currency: req.body?.currency || '₩'
+      amountText: req.body?.amountText || '₩12,000',
+      verb: req.body?.verb || '후원',
+      message: req.body?.message || '',
+      role: req.body?.role || 'common_user',
+      badges: []
     });
-    return res.json({ ok: true });
+  } else {
+    emitChat(id, {
+      id: crypto.randomUUID(),
+      nickname: req.body?.nickname || '테스트유저',
+      message: req.body?.message || '테스트 채팅입니다!',
+      role: req.body?.role || 'common_user',
+      badges: []
+    });
   }
-
-  emitChat(id, {
-    id: crypto.randomUUID(),
-    nickname: req.body?.nickname || '테스트유저',
-    message: req.body?.message || '테스트 채팅입니다!',
-    role: req.body?.role || 'common_user',
-    badges: []
-  });
   res.json({ ok: true });
 });
 
