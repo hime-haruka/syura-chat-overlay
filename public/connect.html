@@ -31,7 +31,7 @@
       <button class="ghost" id="testBtn">일반 테스트</button>
       <button class="ghost" id="testBroadcasterBtn">방장 테스트</button>
       <button class="ghost" id="testModBtn">매니저 테스트</button>
-      <button class="ghost" id="testFollowerBtn">팔로워 테스트</button>
+      <button class="ghost" id="testVipBtn">팔로워 테스트</button>
       <button class="ghost" id="testSubBtn">구독자 테스트</button>
       <button class="ghost" id="testDonationBtn">도네이션 테스트</button>
       <button class="secondary" id="stopBtn">연결 중지</button>
@@ -77,7 +77,7 @@ async function sendTest(role, message){ await call('POST', `/api/test/${clientId
 $('testBtn').onclick = async()=>sendTest('common_user','OBS 일반 테스트 채팅입니다!');
 $('testBroadcasterBtn').onclick = async()=>sendTest('streamer','방장 테스트 메시지입니다!');
 $('testModBtn').onclick = async()=>sendTest('manager','매니저 테스트 메시지입니다!');
-$('testFollowerBtn').onclick = async()=>sendTest('follower','팔로워 테스트 메시지입니다!');
+$('testVipBtn').onclick = async()=>sendTest('follower','팔로워 테스트 메시지입니다!');
 $('testSubBtn').onclick = async()=>sendTest('subscriber','구독자 테스트 메시지입니다!');
 $('testDonationBtn').onclick = async()=>{ await call('POST', `/api/test/${clientId}`, {type:'donation', nickname:'후원테스트', amount:12000, amountText:'₩12,000', message:'도네이션 테스트 메시지입니다!'}); await refresh(); };
 refresh(); setInterval(refresh, 3000);

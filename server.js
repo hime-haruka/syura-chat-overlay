@@ -514,7 +514,7 @@ app.get('/chat/:clientId', async (req, res) => {
   try { config = await loadConfig(clientId); }
   catch { return res.status(404).send('Unknown clientId'); }
   const css = await renderWidgetCss(config);
-  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/original-fragments.js"></script><script src="/static/chat.js"></script></body></html>`);
+  res.send(`<!doctype html><html><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/><title>Chat ${clientId}</title><style>${css}</style></head><body><div class="main-container" data-client-id="${clientId}"></div><script src="/socket.io/socket.io.js"></script><script>window.CHAT_CONFIG=${JSON.stringify(config)};</script><script src="/static/se-original.js"></script><script src="/static/chzzk-se-adapter.js"></script></body></html>`);
 });
 
 app.get('/connect/:clientId', async (req, res) => {
@@ -534,23 +534,26 @@ app.post('/api/test/:clientId', async (req, res) => {
   const type = req.body?.type || 'chat';
   if (type === 'donation') {
     emitChat(id, {
-      id: crypto.randomUUID(),
-      type: 'donation',
-      nickname: req.body?.nickname || '후원테스트',
-      amount: req.body?.amount || 12000,
-      amountText: req.body?.amountText || '₩12,000',
-      verb: req.body?.verb || '후원',
-      message: req.body?.message || '',
-      role: req.body?.role || 'common_user',
-      badges: []
+      event: 'donation',
+      data: {
+        id: crypto.randomUUID(),
+        nickname: req.body?.nickname || '후원테스트',
+        amount: req.body?.amount || 12000,
+        amountText: req.body?.amountText || '₩12,000',
+        message: req.body?.message || '도네이션 테스트 메시지입니다!',
+        role: req.body?.role || 'default'
+      }
     });
   } else {
     emitChat(id, {
-      id: crypto.randomUUID(),
-      nickname: req.body?.nickname || '테스트유저',
-      message: req.body?.message || '테스트 채팅입니다!',
-      role: req.body?.role || 'common_user',
-      badges: []
+      event: 'chat',
+      data: {
+        id: crypto.randomUUID(),
+        nickname: req.body?.nickname || '테스트유저',
+        message: req.body?.message || '테스트 채팅입니다!',
+        role: req.body?.role || 'default',
+        badges: []
+      }
     });
   }
   res.json({ ok: true });
