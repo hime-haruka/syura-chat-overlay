@@ -1,0 +1,18 @@
+{
+  "name": "chzzk-client-chat-overlay",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "receiver": "node receiver/receiver.js",
+    "receiver:test": "TEST_MODE=true node receiver/receiver.js"
+  },
+  "dependencies": {
+    "@d2n0s4ur/chzzk-chat": "^2.0.9",
+    "dotenv": "^16.4.7",
+    "express": "^4.19.2",
+    "ws": "^8.18.0"
+  }
+}
