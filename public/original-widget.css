@@ -471,70 +471,44 @@
 
  
  
-/* === CHZZK faithful layout patch v2 === */
-html, body { width:100%; height:100%; margin:0; background:transparent; overflow:hidden; }
-body { font-size:16px; }
-.main-container {
-  width: min(560px, calc(100vw - 80px)) !important;
-  height: 100% !important;
-  padding: 0 0 48px 48px !important;
-  margin: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  justify-content: flex-end !important;
-  align-items: stretch !important;
-  overflow: visible !important;
+/* === CHZZK original-style safety patch === */
+:root {
+  --frog2: var(--frog1);
+  --lily2: var(--lily1);
+  --lily3: var(--lily1);
 }
-.message-row {
-  width: 100% !important;
-  max-width: 100% !important;
-  flex: 0 0 auto !important;
-  display: block !important;
-  overflow: visible !important;
-  padding-bottom: 30px !important;
-  margin: 0 !important;
+.badgesbox:empty, .badges:empty { display: none; }
+.svgbadge {
+  display: block;
+  width: calc(var(--namesSize) - 2px);
+  height: calc(var(--namesSize) - 2px);
+  max-width: calc(var(--namesSize) - 2px);
+  max-height: calc(var(--namesSize) - 2px);
+  overflow: visible;
 }
-.namebox {
-  left: 53px !important;
-  top: 0 !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  min-height: calc(var(--namesSize) + 14px) !important;
-  line-height: 1.1 !important;
-  box-sizing: border-box !important;
-  white-space: nowrap !important;
-}
-.msgcont {
-  width: calc(100% - 40px) !important;
-  left: 20px !important;
-  top: -10px !important;
-  overflow: visible !important;
-}
-.messagebox {
-  width: 100% !important;
-  min-height: calc(var(--msgSize) + 34px) !important;
-  line-height: 1.45 !important;
-  box-sizing: border-box !important;
-  overflow: visible !important;
-}
-.messagebox .message {
-  display: inline-block !important;
-  width: auto !important;
-  max-width: 100% !important;
-  overflow: visible !important;
-  text-overflow: initial !important;
-  vertical-align: middle !important;
-}
-.badgesbox:empty, .badges:empty { display:none !important; }
-.svgbadge, .custombadge svg, .custombadge img {
-  display:block !important;
+.custombadge .svgbadge,
+.custombadge img {
   width: calc(var(--namesSize) - 2px) !important;
   height: calc(var(--namesSize) - 2px) !important;
-  max-width: calc(var(--namesSize) - 2px) !important;
-  max-height: calc(var(--namesSize) - 2px) !important;
-  object-fit: contain !important;
+  object-fit: contain;
 }
-.custombadge { width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; overflow: hidden !important; }
-.messagebox > svg:not(.svgbadge), .messagebox .lefthand svg, .messagebox .righthand svg { pointer-events:none; overflow:visible; }
-.default .badgescont:has(.badges:empty) { display:none !important; }
-@supports not selector(:has(*)) { .default .badgescont { display:none !important; } }
+.messagebox > svg:not(.svgbadge),
+.messagebox .lefthand svg,
+.messagebox .righthand svg {
+  pointer-events: none;
+  overflow: visible;
+}
+.messagebox .message {
+  display: inline-block;
+  max-width: 100%;
+  overflow: visible;
+  text-overflow: initial;
+  vertical-align: middle;
+}
+.messagebox {
+  line-height: 1.45;
+}
+.message-row.default .badgescont:has(.badges:empty) { display: none; }
+@supports not selector(:has(*)) {
+  .message-row.default .badgescont { display: none; }
+}
