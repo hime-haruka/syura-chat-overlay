@@ -1,0 +1,14 @@
+/* Safety layer: original CSS remains loaded; this only ensures the CHZZK bridge output is visible when StreamElements async init fails. */
+html, body { width: 100%; height: 100%; margin: 0; overflow: hidden; background: transparent; }
+.main-container { min-height: 100%; padding: 24px; gap: 20px; }
+.message-row { width: fit-content; max-width: calc(100% - 40px); position: relative; margin: 14px 0; }
+.namebox { display: inline-block; position: relative; margin-left: 18px; z-index: 2; }
+.name { display: inline-block; background: var(--frog1); color: var(--namescolor); font-family: var(--namesFont); font-weight: var(--namesBold); font-size: var(--namesSize); border-radius: 999px; padding: 5px 16px; border: 3px solid var(--lilypad); }
+.msgcont { position: relative; margin-top: -2px; }
+.messagebox { position: relative; background: var(--msgback); border: 3px solid var(--lilypad); border-radius: 22px; padding: 13px 20px; min-width: 120px; box-shadow: 0 8px 0 rgba(0,0,0,.04); }
+.message { color: var(--msgcolor); font-family: var(--msgFont); font-weight: var(--msgBold); font-size: var(--msgSize); line-height: 1.55; word-break: break-word; }
+.badgescont { position: absolute; right: -7px; top: 0; transform: translateX(100%); z-index: 5; }
+.badgesbox { background: var(--frog1); border-radius: 999px; padding: 3px 8px; min-height: var(--namesSize); }
+.custombadge img { width: calc(var(--namesSize) - 2px); height: calc(var(--namesSize) - 2px); object-fit: contain; }
+.alerttextwrap { background: var(--alertback); border: 3px solid var(--lilypad); border-radius: 999px; padding: 10px 42px; color: var(--alerttext); font-family: var(--msgFont); font-weight: var(--msgBold); }
+.alertName { color: var(--alerttext); font-weight: var(--namesBold); }
