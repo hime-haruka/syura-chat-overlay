@@ -89,12 +89,27 @@
     return String(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
   }
 
-  function renderEmotes(text, emotes) {
-    let source = String(text ?? '');
+  function normalizeEmoteList(payload, text, emotes) {
     const list = Array.isArray(emotes) ? [...emotes] : [];
-    if (source.includes('{:d_51:}') && !list.some(e => (e.code || e.name) === '{:d_51:}')) {
+    const emojiMap = payload?.raw?.data?.emojis || payload?.emojis || payload?.raw?.emojis || {};
+    if (emojiMap && typeof emojiMap === 'object' && !Array.isArray(emojiMap)) {
+      Object.entries(emojiMap).forEach(([code, value]) => {
+        if (!code) return;
+        const url = typeof value === 'string'
+          ? value
+          : (value?.url || value?.imageUrl || value?.image || value?.staticUrl || value?.gifUrl);
+        if (url) list.push({ code, name: code, url });
+      });
+    }
+    if (String(text).includes('{:d_51:}') && !list.some(e => (e.code || e.name) === '{:d_51:}')) {
       list.push({ code:'{:d_51:}', name:'{:d_51:}', url:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png' });
     }
+    return list;
+  }
+
+  function renderEmotes(text, emotes, payload) {
+    let source = String(text ?? '');
+    const list = normalizeEmoteList(payload, source, emotes);
     const tokens = [];
     list.forEach((e, idx) => {
       const code = e.code || e.name || e.id;
@@ -104,6 +119,13 @@
       tokens.push({ token, url });
       source = source.replace(new RegExp(escapeRegExp(code), 'g'), token);
     });
+
+    source = source.replace(/\{:\s*([^:}]+)\s*:\}/g, (_, inner) => {
+      const value = String(inner || '').trim();
+      if (!value) return '';
+      return /[^\u0000-\u007f]/.test(value) ? value : '';
+    });
+
     let html = esc(source);
     for (const e of tokens) {
       html = html.replace(new RegExp(e.token, 'g'), `<img class="emote default" alt="" src="${esc(e.url)}" onerror="this.hidden=true">`);
@@ -144,7 +166,7 @@
     const key = roleKey(payload.role);
     const msgId = esc(String(payload.id || payload.msgId || `chzzk-${Date.now()}-${seq++}`));
     const nick = esc(payload.nickname || payload.displayName || payload.name || '익명');
-    const textHtml = renderEmotes(payload.message || payload.content || payload.text || '', payload.emotes);
+    const textHtml = renderEmotes(payload.message || payload.content || payload.text || '', payload.emotes, payload);
     const decoration = replaceFields(DECOR[key] || DECOR.default || '');
     const rowClass = key === 'streamer' ? 'streamer broadcaster' : key === 'manager' ? 'mod moderator' : key === 'subscriber' ? 'subscriber sub' : key === 'vip' ? 'vip' : 'default';
 
@@ -224,7 +246,12 @@
       .badges { top: auto !important; transform: none !important; height: calc(var(--namesSize) - 2px) !important; display: inline-flex !important; align-items: center !important; }
       .custombadge { top: auto !important; transform: none !important; width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; margin-left: 0 !important; }
       .custombadge svg, .custombadge img { position: relative !important; top: auto !important; left: auto !important; width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; display: block !important; }
-      .message .emote { display:inline-block; width:1.5em; height:1.5em; object-fit:contain; vertical-align:-0.28em; background-size:contain; }
+      .message-row { padding-bottom: 36px !important; margin: 0 !important; }
+      .message-row + .message-row { margin-top: 0 !important; }
+      .msgcont { top: -10px !important; }
+      .messagebox { padding-top: 16px !important; padding-bottom: 15px !important; min-height: 48px !important; }
+      .message { overflow: visible !important; }
+      .message .emote { display:inline-block; width:1.45em; height:1.45em; object-fit:contain; vertical-align:-0.25em; background-size:contain; }
       .message .emote[hidden] { display:none !important; }
     `;
     document.head.appendChild(style);
