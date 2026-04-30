@@ -250,7 +250,7 @@ function normalizeDonation(packet) {
     nickname: data.donatorNickname || data.nickname || data.nick || data.displayName || '익명',
     userId: String(data.donatorChannelId || data.userId || data.nickname || 'donator'),
     amount: Number(data.payAmount || data.amount || data.value || 0),
-    currency: '치즈',
+    currency: 'CHEEZE',
     message: String(data.donationText || data.message || data.msg || data.content || ''),
     emotes: normalizeEmojis(data.emojis),
     raw: p
@@ -584,7 +584,7 @@ app.post('/api/test/donation/:clientId', (req, res) => {
     nickname: req.body.nickname || '치즈테스트',
     userId: 'test-donor',
     amount: Number(req.body.amount || 1000),
-    currency: '치즈',
+    currency: 'CHEEZE',
     message: req.body.message || '방송 전 치즈 알림 테스트입니다'
   };
   rememberAndEmit(clientId, 'chzzk:donation', payload);

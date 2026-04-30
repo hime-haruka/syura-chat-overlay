@@ -57,6 +57,7 @@
       document.body?.style.setProperty(k,v);
       $container()?.style.setProperty(k,v);
     }
+    injectNativeFixCss();
   }
 
   function replaceFields(html) {
@@ -84,19 +85,28 @@
     return 'default';
   }
 
+  function escapeRegExp(v) {
+    return String(v).replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
   function renderEmotes(text, emotes) {
-    let html = esc(text);
-    const list = Array.isArray(emotes) ? emotes : [];
-    const normalized = [...list];
-    if (String(text).includes('{:d_51:}') && !normalized.some(e => (e.code || e.name) === '{:d_51:}')) {
-      normalized.push({ code:'{:d_51:}', name:'{:d_51:}', url:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png' });
+    let source = String(text ?? '');
+    const list = Array.isArray(emotes) ? [...emotes] : [];
+    if (source.includes('{:d_51:}') && !list.some(e => (e.code || e.name) === '{:d_51:}')) {
+      list.push({ code:'{:d_51:}', name:'{:d_51:}', url:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png' });
     }
-    for (const e of normalized) {
+    const tokens = [];
+    list.forEach((e, idx) => {
       const code = e.code || e.name || e.id;
       const url = e.url || e.imageUrl || e.image;
-      if (!code || !url) continue;
-      const img = `<img class="emote default" alt="${esc(code)}" src="${esc(url)}">`;
-      html = html.split(esc(code)).join(img);
+      if (!code || !url) return;
+      const token = `__CHZZK_EMOTE_${idx}__`;
+      tokens.push({ token, url });
+      source = source.replace(new RegExp(escapeRegExp(code), 'g'), token);
+    });
+    let html = esc(source);
+    for (const e of tokens) {
+      html = html.replace(new RegExp(e.token, 'g'), `<img class="emote default" alt="" src="${esc(e.url)}" onerror="this.hidden=true">`);
     }
     return html;
   }
@@ -172,7 +182,7 @@
 
     const nick = esc(payload.nickname || payload.donatorNickname || payload.displayName || payload.name || '익명');
     const amount = Number(payload.amount || payload.payAmount || payload.value || 0);
-    const currency = esc(payload.currency || 'CHEEZE');
+    const currency = esc(String(payload.currency || 'CHEEZE').toLowerCase() === '치즈' ? 'CHEEZE' : String(payload.currency || 'CHEEZE').toUpperCase());
 
     const row = document.createElement('div');
     row.innerHTML = replaceFields(ALERT_PREFIX) +
@@ -202,6 +212,23 @@
     currency:p.currency||'CHEEZE',
     message:p.message||'방송 전 치즈 알림 테스트입니다'
   });
+
+  function injectNativeFixCss() {
+    if (document.getElementById('chzzk-native-fix-css')) return;
+    const style = document.createElement('style');
+    style.id = 'chzzk-native-fix-css';
+    style.textContent = `
+      .namebox { overflow: visible !important; }
+      .badgescont { top: 50% !important; right: -10px !important; transform: translate(100%, -50%) !important; z-index: 40 !important; pointer-events: none !important; }
+      .badgesbox { display: flex !important; align-items: center !important; justify-content: center !important; min-width: calc(var(--namesSize) + 8px) !important; height: var(--namesSize) !important; padding: 3px 7px !important; line-height: 1 !important; overflow: visible !important; }
+      .badges { top: auto !important; transform: none !important; height: calc(var(--namesSize) - 2px) !important; display: inline-flex !important; align-items: center !important; }
+      .custombadge { top: auto !important; transform: none !important; width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; margin-left: 0 !important; }
+      .custombadge svg, .custombadge img { position: relative !important; top: auto !important; left: auto !important; width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; display: block !important; }
+      .message .emote { display:inline-block; width:1.5em; height:1.5em; object-fit:contain; vertical-align:-0.28em; background-size:contain; }
+      .message .emote[hidden] { display:none !important; }
+    `;
+    document.head.appendChild(style);
+  }
 
   function connectSocket(){
     socket = io('/', {

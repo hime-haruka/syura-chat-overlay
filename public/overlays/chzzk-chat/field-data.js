@@ -92,5 +92,5 @@ window.SE_FIELD_DATA = {
   "frog2": "#bce78e",
   "lily2": "#f592b4",
   "lily3": "#f592b4",
-  "currency": "치즈 "
+  "currency": "CHEEZE"
 };
