@@ -195,7 +195,7 @@
     row.innerHTML = `
       <span class="namebox">
         ${badgeHtml(key)}
-        <span class="name">${nick}</span>
+        
       </span>
       <div class="msgcont">
         <div class="messagebox">
