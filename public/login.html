@@ -56,7 +56,7 @@
     testVipButton.addEventListener('click',()=>sendChat('follower','VIP 스타일 테스트 채팅입니다','VIP테스트'));
     testSubButton.addEventListener('click',()=>sendChat('subscriber','구독자 스타일 테스트 채팅입니다','구독자테스트'));
     testModButton.addEventListener('click',()=>sendChat('manager','매니저 스타일 테스트 채팅입니다','매니저테스트'));
-    testDonationButton.addEventListener('click',()=>{const payload={nickname:'치즈테스트',amount:1000,message:'방송 전 치즈 알림 테스트입니다'}; previewFrame.contentWindow?.__CHZZK_SE_TEST_DONATION?.(payload); post(`/api/test/donation/${encodeURIComponent(clientId())}`,payload)});
+    testDonationButton.addEventListener('click',()=>{const payload={nickname:'치즈테스트',amount:1000,currency:'CHEEZE',message:'방송 전 치즈 알림 테스트입니다'}; previewFrame.contentWindow?.__CHZZK_SE_TEST_DONATION?.(payload); post(`/api/test/donation/${encodeURIComponent(clientId())}`,payload)});
     refreshLinks();bindSocket();
   </script>
 </body>
