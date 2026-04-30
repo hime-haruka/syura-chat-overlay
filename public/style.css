@@ -1,0 +1,30 @@
+
+body {
+  margin:0;
+  background: transparent;
+  font-family: sans-serif;
+}
+
+#chat {
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+  padding:20px;
+}
+
+.chat-box {
+  background:#e9f7e9;
+  border:3px solid #7ed957;
+  border-radius:20px;
+  padding:10px 16px;
+  width: fit-content;
+}
+
+.name {
+  font-weight:bold;
+  color:#4caf50;
+}
+
+.text {
+  margin-top:4px;
+}

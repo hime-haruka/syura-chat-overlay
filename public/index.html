@@ -1,0 +1,26 @@
+
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<link rel="stylesheet" href="style.css"/>
+</head>
+<body>
+<div id="chat"></div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+const socket = io();
+
+socket.on('chat', (msg)=>{
+  const el = document.createElement('div');
+  el.className = 'chat-box';
+  el.innerHTML = `
+    <div class="name">${msg.nickname}</div>
+    <div class="text">${msg.message}</div>
+  `;
+  document.getElementById('chat').appendChild(el);
+});
+</script>
+</body>
+</html>
