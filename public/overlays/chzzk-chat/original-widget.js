@@ -776,3 +776,12 @@ function getLightColor1(_0x547828) {
         _0x4cf5de += 0x168;
     return _0xb85f67 = (_0x42ea77 + _0x54864a) / 0x2, _0x24a553 = _0x1ea30c == 0x0 ? 0x0 : _0x1ea30c / (0x1 - Math[_0x2874e1(0x28)](0x2 * _0xb85f67 - 0x1)), _0x24a553 = +(_0x24a553 * 0x64)[_0x2874e1(0xc8)](0x1), _0xb85f67 = +(_0xb85f67 * 0x64)['toFixed'](0x1), _0xb85f67 = _0xb85f67 + 0x8, _0x2874e1(0xc9) + _0x4cf5de + ',' + _0x24a553 + '%,' + _0xb85f67 + '%)';
 }
+
+;(() => {
+  try {
+    if (typeof addMessage === 'function') window.addMessage = addMessage;
+    if (typeof addMessage === 'function') window.__ORIGINAL_SE_ADD_MESSAGE_READY__ = true;
+  } catch (e) {
+    console.warn('[CHZZK patch] addMessage expose failed', e);
+  }
+})();
