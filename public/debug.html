@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHZZK Overlay Debug</title>
+  <style>
+    body{margin:0;background:#0b0f16;color:#fff;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;padding:20px}button,input{font:inherit;padding:10px;border-radius:10px;border:0;margin:4px}button{cursor:pointer;background:#00ffa3;color:#06110c;font-weight:900}.row{margin-bottom:12px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}pre{background:#151d29;border:1px solid #2b3a50;border-radius:14px;padding:14px;white-space:pre-wrap;overflow:auto;max-height:70vh}iframe{width:100%;height:560px;border:1px solid #2b3a50;border-radius:14px;background:transparent}@media(max-width:900px){.grid{grid-template-columns:1fr}}
+  </style>
+</head>
+<body>
+  <h1>CHZZK Overlay Debug</h1>
+  <div class="row">
+    <input id="clientId" />
+    <button id="reload">상태 새로고침</button>
+    <button id="connect">채팅 연결</button>
+    <button id="testChat">테스트 채팅</button>
+    <button id="testDonation">치즈 테스트</button>
+    <button id="directChat">iframe 직접 채팅</button>
+  </div>
+  <div class="grid">
+    <div>
+      <h2>OBS 미리보기</h2>
+      <iframe id="frame"></iframe>
+    </div>
+    <div>
+      <h2>로그</h2>
+      <pre id="log"></pre>
+    </div>
+  </div>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const input=document.querySelector('#clientId'), log=document.querySelector('#log'), frame=document.querySelector('#frame');
+    input.value=location.pathname.split('/').filter(Boolean).pop()||'pop';
+    let socket;
+    const id=()=>input.value.trim()||'pop';
+    function print(v){log.textContent=`${new Date().toISOString()}\n${JSON.stringify(v,null,2)}\n\n`+log.textContent}
+    function setFrame(){frame.src=`/chat/${encodeURIComponent(id())}?debug=1&t=${Date.now()}`}
+    async function post(url,body={}){const r=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const j=await r.json();print(j);return j}
+    async function load(){const r=await fetch(`/api/debug/${encodeURIComponent(id())}`);print(await r.json())}
+    function bind(){if(socket)socket.disconnect();socket=io({query:{clientId:id()},auth:{clientId:id()}});socket.onAny((event,...args)=>print({socketEvent:event,args}));}
+    document.querySelector('#reload').onclick=load;
+    document.querySelector('#connect').onclick=()=>post(`/api/connect/${encodeURIComponent(id())}`);
+    document.querySelector('#testChat').onclick=()=>post(`/api/test/chat/${encodeURIComponent(id())}`,{nickname:'디버그테스트',role:'streamer',message:'디버그 테스트 채팅입니다 {:d_51:}'});
+    document.querySelector('#testDonation').onclick=()=>post(`/api/test/donation/${encodeURIComponent(id())}`,{nickname:'디버그치즈',amount:1000,message:'디버그 치즈 테스트입니다'});
+    document.querySelector('#directChat').onclick=()=>frame.contentWindow?.__CHZZK_SE_TEST_CHAT?.({nickname:'직접테스트',role:'streamer',message:'iframe 직접 발화 테스트입니다 {:d_51:}'});
+    input.onchange=()=>{history.replaceState(null,'',`/debug/${encodeURIComponent(id())}`);setFrame();bind();load()};
+    setFrame();bind();load();
+  </script>
+</body>
+</html>

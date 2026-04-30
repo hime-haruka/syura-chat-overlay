@@ -25,6 +25,7 @@
         <button id="testModButton" class="warn">매니저 테스트</button>
         <button id="testDonationButton" class="warn">치즈 테스트</button>
         <a id="openOverlayButton" class="button secondary" href="#" target="_blank" rel="noreferrer">오버레이 새 창</a>
+        <a id="debugButton" class="button secondary" href="#" target="_blank" rel="noreferrer">디버그 열기</a>
       </div>
       <div id="status" class="status">준비 중...</div>
       <p class="hint">테스트 버튼은 로그인 성공 여부와 관계없이 오른쪽 미리보기/OBS URL에 바로 표시됩니다.</p>
@@ -38,24 +39,24 @@
   <script src="/socket.io/socket.io.js"></script>
   <script>
     const $ = (s) => document.querySelector(s);
-    const clientInput=$('#clientId'), loginButton=$('#loginButton'), connectButton=$('#connectButton'), testChatButton=$('#testChatButton'), testVipButton=$('#testVipButton'), testSubButton=$('#testSubButton'), testModButton=$('#testModButton'), testDonationButton=$('#testDonationButton'), openOverlayButton=$('#openOverlayButton'), obsUrl=$('#obsUrl'), statusBox=$('#status'), previewFrame=$('#previewFrame');
+    const clientInput=$('#clientId'), loginButton=$('#loginButton'), connectButton=$('#connectButton'), testChatButton=$('#testChatButton'), testVipButton=$('#testVipButton'), testSubButton=$('#testSubButton'), testModButton=$('#testModButton'), testDonationButton=$('#testDonationButton'), openOverlayButton=$('#openOverlayButton'), debugButton=$('#debugButton'), obsUrl=$('#obsUrl'), statusBox=$('#status'), previewFrame=$('#previewFrame');
     const pathClientId = location.pathname.split('/').filter(Boolean).pop();
     clientInput.value = pathClientId && pathClientId !== 'login' ? pathClientId : 'pop';
     let socket;
     function clientId(){return clientInput.value.trim()||'pop'}
     function print(v){statusBox.textContent=JSON.stringify(v,null,2)}
-    function refreshLinks(){const id=encodeURIComponent(clientId());obsUrl.textContent=`${location.origin}/chat/${id}`;loginButton.href=`/auth/chzzk?clientId=${id}`;openOverlayButton.href=`/chat/${id}`;previewFrame.src=`/chat/${id}?preview=${Date.now()}`;history.replaceState(null,'',`/login/${id}`)}
+    function refreshLinks(){const id=encodeURIComponent(clientId());obsUrl.textContent=`${location.origin}/chat/${id}`;loginButton.href=`/auth/chzzk?clientId=${id}`;openOverlayButton.href=`/chat/${id}`;debugButton.href=`/debug/${id}`;previewFrame.src=`/chat/${id}?debug=1&preview=${Date.now()}`;history.replaceState(null,'',`/login/${id}`)}
     function bindSocket(){if(socket)socket.disconnect();socket=io({query:{clientId:clientId()}});socket.on('chzzk:status',print);socket.on('connect',()=>loadStatus())}
     async function post(url,body={}){const res=await fetch(url,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});const json=await res.json();print(json);return json}
     async function loadStatus(){const res=await fetch(`/api/auth/status/${encodeURIComponent(clientId())}`);print(await res.json())}
-    function sendChat(role,message,nickname='치지직테스트'){return post(`/api/test/chat/${encodeURIComponent(clientId())}`,{nickname,role,message,emotes:[{code:'{:d_51:}',name:'{:d_51:}',url:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png'}]})}
+    async function sendChat(role,message,nickname='치지직테스트'){const payload={nickname,role,message,emotes:[{code:'{:d_51:}',name:'{:d_51:}',url:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png'}]}; previewFrame.contentWindow?.__CHZZK_SE_TEST_CHAT?.(payload); return post(`/api/test/chat/${encodeURIComponent(clientId())}`,payload)}
     clientInput.addEventListener('change',()=>{refreshLinks();bindSocket()});
     connectButton.addEventListener('click',()=>post(`/api/connect/${encodeURIComponent(clientId())}`));
     testChatButton.addEventListener('click',()=>sendChat('streamer','방송 전 디자인 확인용 테스트 채팅입니다 {:d_51:}','스트리머테스트'));
     testVipButton.addEventListener('click',()=>sendChat('follower','VIP 스타일 테스트 채팅입니다','VIP테스트'));
     testSubButton.addEventListener('click',()=>sendChat('subscriber','구독자 스타일 테스트 채팅입니다','구독자테스트'));
     testModButton.addEventListener('click',()=>sendChat('manager','매니저 스타일 테스트 채팅입니다','매니저테스트'));
-    testDonationButton.addEventListener('click',()=>post(`/api/test/donation/${encodeURIComponent(clientId())}`,{nickname:'치즈테스트',amount:1000,message:'방송 전 치즈 알림 테스트입니다'}));
+    testDonationButton.addEventListener('click',()=>{const payload={nickname:'치즈테스트',amount:1000,message:'방송 전 치즈 알림 테스트입니다'}; previewFrame.contentWindow?.__CHZZK_SE_TEST_DONATION?.(payload); post(`/api/test/donation/${encodeURIComponent(clientId())}`,payload)});
     refreshLinks();bindSocket();
   </script>
 </body>

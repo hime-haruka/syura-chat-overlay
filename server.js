@@ -262,7 +262,15 @@ function rememberAndEmit(clientId, eventName, payload) {
   s.lastEventAt = Date.now();
   s.backlog.push({ eventName, payload, at: Date.now() });
   if (s.backlog.length > MAX_BACKLOG) s.backlog.splice(0, s.backlog.length - MAX_BACKLOG);
+
+  // 1) 정상 room emit
   io.to(clientId).emit(eventName, payload);
+
+  // 2) clientId 전용 이벤트명 emit: room join이 꼬여도 /chat/:clientId가 반드시 받을 수 있게 보강
+  io.emit(`${eventName}:${clientId}`, payload);
+
+  // 3) 디버그 페이지용
+  io.to(`debug:${clientId}`).emit('debug:event', { eventName, clientEventName: `${eventName}:${clientId}`, payload, at: Date.now() });
 }
 
 function handleChzzkPacket(clientId, packet) {
@@ -421,21 +429,43 @@ function disconnectChzzk(clientId = DEFAULT_CLIENT_ID) {
   emitStatus(clientId);
 }
 
+function pickClientIdFromSocket(socket) {
+  const q = socket.handshake.query || {};
+  const a = socket.handshake.auth || {};
+  const referer = String(socket.handshake.headers?.referer || '');
+  const match = referer.match(/\/(?:chat|login|debug)\/([^/?#]+)/);
+  return String(q.clientId || a.clientId || (match ? decodeURIComponent(match[1]) : '') || DEFAULT_CLIENT_ID);
+}
+
 io.on('connection', socket => {
-  const clientId = String(socket.handshake.query.clientId || DEFAULT_CLIENT_ID);
+  const clientId = pickClientIdFromSocket(socket);
   socket.join(clientId);
-  emitStatus(clientId);
+  socket.join(`debug:${clientId}`);
+
+  const roomSize = io.sockets.adapter.rooms.get(clientId)?.size || 0;
+  log(clientId, 'overlay/admin socket connected', socket.id, 'roomSize=', roomSize);
+
+  socket.emit('chzzk:status', publicStatus(clientId));
+  io.to(`debug:${clientId}`).emit('debug:socket', { type: 'connected', socketId: socket.id, clientId, roomSize, at: Date.now() });
 
   const s = getState(clientId);
-  for (const item of s.backlog.slice(-5)) {
+  for (const item of s.backlog.slice(-10)) {
     socket.emit(item.eventName, item.payload);
+    socket.emit(`${item.eventName}:${clientId}`, item.payload);
   }
+
+  socket.on('disconnect', reason => {
+    const size = io.sockets.adapter.rooms.get(clientId)?.size || 0;
+    log(clientId, 'socket disconnected', socket.id, reason, 'roomSize=', size);
+    io.to(`debug:${clientId}`).emit('debug:socket', { type: 'disconnected', socketId: socket.id, clientId, reason, roomSize: size, at: Date.now() });
+  });
 });
 
 app.get('/', (req, res) => res.redirect(`/login/${DEFAULT_CLIENT_ID}`));
 app.get('/chat/:clientId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'chat.html')));
 app.get('/admin/:clientId?', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
 app.get('/login/:clientId?', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+app.get('/debug/:clientId?', (req, res) => res.sendFile(path.join(__dirname, 'public', 'debug.html')));
 
 app.get('/auth/chzzk', (req, res) => {
   const clientId = String(req.query.clientId || DEFAULT_CLIENT_ID).trim() || DEFAULT_CLIENT_ID;
@@ -494,6 +524,18 @@ app.get('/auth/chzzk/callback', async (req, res) => {
 
 app.get('/api/auth/status/:clientId', (req, res) => res.json(publicStatus(req.params.clientId || DEFAULT_CLIENT_ID)));
 app.get('/api/status/:clientId', (req, res) => res.json(publicStatus(req.params.clientId || DEFAULT_CLIENT_ID)));
+
+app.get('/api/debug/:clientId', (req, res) => {
+  const clientId = req.params.clientId || DEFAULT_CLIENT_ID;
+  const room = io.sockets.adapter.rooms.get(clientId);
+  const debugRoom = io.sockets.adapter.rooms.get(`debug:${clientId}`);
+  res.json({
+    ...publicStatus(clientId),
+    roomSize: room?.size || 0,
+    debugRoomSize: debugRoom?.size || 0,
+    backlog: getState(clientId).backlog.slice(-10)
+  });
+});
 
 app.post('/api/connect/:clientId', async (req, res) => {
   const clientId = req.params.clientId || DEFAULT_CLIENT_ID;
