@@ -13,7 +13,7 @@ const __dirname = path.dirname(__filename);
 
 const PORT = Number(process.env.PORT || 3000);
 const DEFAULT_CLIENT_ID = process.env.DEFAULT_CLIENT_ID || 'pop';
-const SESSION_CREATE_URL = process.env.CHZZK_SESSION_CREATE_URL || 'https://openapi.chzzk.naver.com/open/v1/sessions/auth/client';
+const SESSION_CREATE_URL = process.env.CHZZK_SESSION_CREATE_URL || 'https://openapi.chzzk.naver.com/open/v1/sessions/auth';
 const CHAT_SUBSCRIBE_URL = process.env.CHZZK_CHAT_SUBSCRIBE_URL || 'https://openapi.chzzk.naver.com/open/v1/sessions/events/subscribe/chat';
 const CHZZK_AUTH_URL = process.env.CHZZK_AUTH_URL || 'https://chzzk.naver.com/account-interlock';
 const CHZZK_TOKEN_URL = process.env.CHZZK_TOKEN_URL || 'https://openapi.chzzk.naver.com/auth/v1/token';

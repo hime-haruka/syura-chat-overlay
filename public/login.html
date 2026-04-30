@@ -12,85 +12,84 @@
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
       background: radial-gradient(circle at top, #26344d 0, #10131d 48%, #090b10 100%);
       color: #fff;
-      display: grid;
-      place-items: center;
       padding: 24px;
     }
-    .card {
-      width: min(720px, 100%);
+    .wrap { width: min(1180px, 100%); margin: 0 auto; display: grid; grid-template-columns: 480px 1fr; gap: 18px; align-items: stretch; }
+    .card, .preview {
       background: rgba(255,255,255,0.08);
       border: 1px solid rgba(255,255,255,0.14);
       border-radius: 28px;
-      padding: 28px;
       box-shadow: 0 24px 80px rgba(0,0,0,0.35);
       backdrop-filter: blur(18px);
+      overflow: hidden;
     }
-    h1 { margin: 0 0 8px; font-size: 28px; }
+    .card { padding: 28px; }
+    h1 { margin: 0 0 8px; font-size: 27px; }
     p { color: rgba(255,255,255,0.78); line-height: 1.6; }
-    label { display: block; margin: 18px 0 8px; color: rgba(255,255,255,0.72); font-weight: 700; }
+    label { display: block; margin: 18px 0 8px; color: rgba(255,255,255,0.72); font-weight: 800; }
     input {
-      width: 100%;
-      padding: 14px 16px;
-      border: 1px solid rgba(255,255,255,0.16);
-      border-radius: 14px;
-      background: rgba(0,0,0,0.28);
-      color: #fff;
-      font: inherit;
-      outline: none;
+      width: 100%; padding: 14px 16px; border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 14px; background: rgba(0,0,0,0.28); color: #fff; font: inherit; outline: none;
     }
     .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
     button, a.button {
-      appearance: none;
-      border: 0;
-      border-radius: 999px;
-      padding: 12px 18px;
-      font: inherit;
-      font-weight: 800;
-      cursor: pointer;
-      color: #08100c;
-      background: #00ffa3;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      min-height: 46px;
+      appearance: none; border: 0; border-radius: 999px; padding: 12px 18px; font: inherit; font-weight: 900;
+      cursor: pointer; color: #08100c; background: #00ffa3; text-decoration: none; display: inline-flex;
+      align-items: center; justify-content: center; min-height: 46px;
     }
     button.secondary, a.secondary { background: rgba(255,255,255,0.14); color: #fff; }
     button.warn { background: #ffd166; }
+    button.danger { background: #ff8fab; }
     .status {
-      margin-top: 18px;
-      padding: 14px;
-      border-radius: 16px;
-      background: rgba(0,0,0,0.22);
-      white-space: pre-wrap;
-      color: rgba(255,255,255,0.84);
-      min-height: 72px;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 13px;
+      margin-top: 18px; padding: 14px; border-radius: 16px; background: rgba(0,0,0,0.22);
+      white-space: pre-wrap; color: rgba(255,255,255,0.84); min-height: 118px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size: 12px; overflow:auto;
     }
     code { color: #8fffd0; word-break: break-all; }
+    .previewHead { padding: 16px 18px; border-bottom: 1px solid rgba(255,255,255,0.12); display:flex; justify-content:space-between; gap:10px; align-items:center; }
+    .previewHead strong { font-size: 15px; }
+    .previewFrameWrap { height: 620px; background: transparent; position: relative; }
+    iframe { width: 100%; height: 100%; border: 0; background: transparent; }
+    .hint { margin-top: 10px; font-size: 13px; color: rgba(255,255,255,0.62); }
+    @media (max-width: 980px) { .wrap { grid-template-columns: 1fr; } .previewFrameWrap { height: 520px; } }
   </style>
 </head>
 <body>
-  <main class="card">
-    <h1>CHZZK 채팅 오버레이 로그인</h1>
-    <p>치지직 계정으로 로그인하면 이 클라이언트의 채팅을 OBS 브라우저 소스 오버레이로 받을 수 있습니다.</p>
+  <div class="wrap">
+    <main class="card">
+      <h1>CHZZK 채팅 오버레이 로그인</h1>
+      <p>클라이언트가 치지직 계정으로 로그인하면, 이 ID의 채팅이 OBS 브라우저 소스 오버레이로 전달됩니다.</p>
 
-    <label for="clientId">클라이언트 ID</label>
-    <input id="clientId" autocomplete="off" />
+      <label for="clientId">클라이언트 ID</label>
+      <input id="clientId" autocomplete="off" />
 
-    <p>OBS 브라우저 소스 URL<br><code id="obsUrl"></code></p>
+      <p>OBS 브라우저 소스 URL<br><code id="obsUrl"></code></p>
 
-    <div class="buttons">
-      <a id="loginButton" class="button" href="#">치지직 로그인</a>
-      <button id="connectButton" class="secondary">채팅 연결 시작</button>
-      <button id="testChatButton" class="warn">테스트 채팅</button>
-      <button id="testDonationButton" class="warn">테스트 후원</button>
-      <a id="openOverlayButton" class="button secondary" href="#" target="_blank" rel="noreferrer">오버레이 열기</a>
-    </div>
+      <div class="buttons">
+        <a id="loginButton" class="button" href="#">치지직 로그인</a>
+        <button id="connectButton" class="secondary">채팅 연결 시작</button>
+        <button id="testChatButton" class="warn">테스트 채팅</button>
+        <button id="testVipButton" class="warn">VIP 테스트</button>
+        <button id="testSubButton" class="warn">구독자 테스트</button>
+        <button id="testModButton" class="warn">매니저 테스트</button>
+        <button id="testDonationButton" class="danger">테스트 후원</button>
+        <a id="openOverlayButton" class="button secondary" href="#" target="_blank" rel="noreferrer">오버레이 새 창</a>
+      </div>
 
-    <div id="status" class="status">준비 중...</div>
-  </main>
+      <p class="hint">테스트 버튼은 방송을 켜지 않아도 오른쪽 미리보기와 OBS 오버레이에 바로 표시됩니다.</p>
+      <div id="status" class="status">준비 중...</div>
+    </main>
+
+    <section class="preview">
+      <div class="previewHead">
+        <strong>디자인 미리보기</strong>
+        <button id="reloadPreviewButton" class="secondary">미리보기 새로고침</button>
+      </div>
+      <div class="previewFrameWrap">
+        <iframe id="previewFrame" allowtransparency="true"></iframe>
+      </div>
+    </section>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
@@ -99,30 +98,33 @@
     const loginButton = $('#loginButton');
     const connectButton = $('#connectButton');
     const testChatButton = $('#testChatButton');
+    const testVipButton = $('#testVipButton');
+    const testSubButton = $('#testSubButton');
+    const testModButton = $('#testModButton');
     const testDonationButton = $('#testDonationButton');
     const openOverlayButton = $('#openOverlayButton');
+    const reloadPreviewButton = $('#reloadPreviewButton');
+    const previewFrame = $('#previewFrame');
     const obsUrl = $('#obsUrl');
     const statusBox = $('#status');
 
     const pathClientId = location.pathname.split('/').filter(Boolean).pop();
-    clientInput.value = pathClientId && pathClientId !== 'login' ? pathClientId : 'pop';
+    clientInput.value = pathClientId && pathClientId !== 'login' ? decodeURIComponent(pathClientId) : 'pop';
 
     let socket;
 
-    function clientId() {
-      return clientInput.value.trim() || 'pop';
-    }
+    function clientId() { return clientInput.value.trim() || 'pop'; }
+    function encId() { return encodeURIComponent(clientId()); }
+    function print(value) { statusBox.textContent = JSON.stringify(value, null, 2); }
 
-    function print(value) {
-      statusBox.textContent = JSON.stringify(value, null, 2);
-    }
-
-    function refreshLinks() {
-      const id = encodeURIComponent(clientId());
-      obsUrl.textContent = `${location.origin}/chat/${id}`;
+    function refreshLinks({ reloadFrame = false } = {}) {
+      const id = encId();
+      const overlayUrl = `/chat/${id}`;
+      obsUrl.textContent = `${location.origin}${overlayUrl}`;
       loginButton.href = `/auth/chzzk?clientId=${id}`;
-      openOverlayButton.href = `/chat/${id}`;
+      openOverlayButton.href = overlayUrl;
       history.replaceState(null, '', `/login/${id}`);
+      if (reloadFrame || !previewFrame.src) previewFrame.src = `${overlayUrl}?preview=${Date.now()}`;
     }
 
     function bindSocket() {
@@ -138,35 +140,38 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
-      const json = await res.json();
+      let json;
+      try { json = await res.json(); } catch { json = { ok: false, status: res.status, text: await res.text() }; }
       print(json);
       return json;
     }
 
     async function loadStatus() {
-      const res = await fetch(`/api/auth/status/${encodeURIComponent(clientId())}`);
+      const res = await fetch(`/api/auth/status/${encId()}`);
       print(await res.json());
     }
 
-    clientInput.addEventListener('change', () => {
-      refreshLinks();
-      bindSocket();
-    });
+    function testChat(role, message) {
+      return post(`/api/test/chat/${encId()}`, {
+        nickname: role === 'streamer' ? '방송자테스트' : role === 'manager' ? '매니저테스트' : role === 'subscriber' ? '구독자테스트' : role === 'follower' ? 'VIP테스트' : '치지직테스트',
+        role,
+        message,
+        emotes: [{ code: '{:d_51:}', url: 'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png' }]
+      });
+    }
 
-    connectButton.addEventListener('click', () => post(`/api/connect/${encodeURIComponent(clientId())}`));
-    testChatButton.addEventListener('click', () => post(`/api/test/chat/${encodeURIComponent(clientId())}`, {
-      nickname: '치지직테스트',
-      role: 'streamer',
-      message: '방송 전 디자인 확인용 테스트 채팅입니다 {:d_51:}',
-      emotes: [{ code: '{:d_51:}', url: 'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png' }]
-    }));
-    testDonationButton.addEventListener('click', () => post(`/api/test/donation/${encodeURIComponent(clientId())}`, {
-      nickname: '후원테스트',
-      amount: 1000,
-      message: '방송 전 후원 알림 테스트입니다'
+    clientInput.addEventListener('change', () => { refreshLinks({ reloadFrame: true }); bindSocket(); });
+    reloadPreviewButton.addEventListener('click', () => refreshLinks({ reloadFrame: true }));
+    connectButton.addEventListener('click', () => post(`/api/connect/${encId()}`));
+    testChatButton.addEventListener('click', () => testChat('streamer', '방송 전 디자인 확인용 테스트 채팅입니다 {:d_51:}'));
+    testVipButton.addEventListener('click', () => testChat('follower', 'VIP 스타일 테스트 메시지입니다'));
+    testSubButton.addEventListener('click', () => testChat('subscriber', '구독자 스타일 테스트 메시지입니다'));
+    testModButton.addEventListener('click', () => testChat('manager', '매니저 스타일 테스트 메시지입니다'));
+    testDonationButton.addEventListener('click', () => post(`/api/test/donation/${encId()}`, {
+      nickname: '후원테스트', amount: 1000, message: '방송 전 후원 알림 테스트입니다'
     }));
 
-    refreshLinks();
+    refreshLinks({ reloadFrame: true });
     bindSocket();
   </script>
 </body>
