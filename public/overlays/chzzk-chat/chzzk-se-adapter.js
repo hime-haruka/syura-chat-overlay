@@ -111,15 +111,31 @@
     let source = String(text ?? '');
     const list = normalizeEmoteList(payload, source, emotes);
     const tokens = [];
+
     list.forEach((e, idx) => {
-      const code = e.code || e.name || e.id;
+      const code = String(e.code || e.name || e.id || '').trim();
+      const name = String(e.name || e.code || e.id || '').trim();
       const url = e.url || e.imageUrl || e.image;
       if (!code || !url) return;
+
       const token = `__CHZZK_EMOTE_${idx}__`;
       tokens.push({ token, url });
-      source = source.replace(new RegExp(escapeRegExp(code), 'g'), token);
+
+      // Wrapped form first: {:👾:} -> img, not {:<img>:}
+      const variants = Array.from(new Set([
+        `{:${code}:}`,
+        `{: ${code} :}`,
+        name ? `{:${name}:}` : '',
+        code,
+        name
+      ].filter(Boolean))).sort((a, b) => b.length - a.length);
+
+      for (const v of variants) {
+        source = source.replace(new RegExp(escapeRegExp(v), 'g'), token);
+      }
     });
 
+    // URL 없는 치지직/유니코드 래핑 이모지는 괄호 제거 후 내용만 남김
     source = source.replace(/\{:\s*([^:}]+)\s*:\}/g, (_, inner) => {
       const value = String(inner || '').trim();
       if (!value) return '';
@@ -130,6 +146,7 @@
     for (const e of tokens) {
       html = html.replace(new RegExp(e.token, 'g'), `<img class="emote default" alt="" src="${esc(e.url)}" onerror="this.hidden=true">`);
     }
+    html = html.replace(/\{:\s*(<img\b[^>]*>)\s*:\}/g, '$1');
     return html;
   }
 
@@ -246,11 +263,14 @@
       .badges { top: auto !important; transform: none !important; height: calc(var(--namesSize) - 2px) !important; display: inline-flex !important; align-items: center !important; }
       .custombadge { top: auto !important; transform: none !important; width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; margin-left: 0 !important; }
       .custombadge svg, .custombadge img { position: relative !important; top: auto !important; left: auto !important; width: calc(var(--namesSize) - 2px) !important; height: calc(var(--namesSize) - 2px) !important; display: block !important; }
-      .message-row { padding-bottom: 36px !important; margin: 0 !important; }
+      .main-container { gap: 0 !important; padding: 10px 0 22px 0 !important; }
+      .message-row { margin: 0 0 34px 0 !important; padding: 0 !important; min-height: 82px !important; overflow: visible !important; }
+      .message-row:last-child { margin-bottom: 0 !important; }
       .message-row + .message-row { margin-top: 0 !important; }
-      .msgcont { top: -10px !important; }
-      .messagebox { padding-top: 16px !important; padding-bottom: 15px !important; min-height: 48px !important; }
-      .message { overflow: visible !important; }
+      .namebox { top: 0 !important; margin-bottom: 0 !important; }
+      .msgcont { top: -10px !important; margin: 0 !important; }
+      .messagebox { padding-top: 18px !important; padding-bottom: 18px !important; min-height: 54px !important; line-height: 1.55 !important; }
+      .message { overflow: visible !important; line-height: 1.55 !important; display: inline-block !important; }
       .message .emote { display:inline-block; width:1.45em; height:1.45em; object-fit:contain; vertical-align:-0.25em; background-size:contain; }
       .message .emote[hidden] { display:none !important; }
     `;
