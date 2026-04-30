@@ -4,12 +4,13 @@ import http from 'http';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { Server } from 'socket.io';
-import chzzkSocketIo from 'socket.io-client';
+import chzzkIo from 'socket.io-client';
 import crypto from 'crypto';
 import fs from 'fs';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+
 const PORT = Number(process.env.PORT || 3000);
 const DEFAULT_CLIENT_ID = process.env.DEFAULT_CLIENT_ID || 'pop';
 const SESSION_CREATE_URL = process.env.CHZZK_SESSION_CREATE_URL || 'https://openapi.chzzk.naver.com/open/v1/sessions/auth';
@@ -21,46 +22,544 @@ const CHZZK_APP_CLIENT_ID = process.env.CHZZK_APP_CLIENT_ID || process.env.CHZZK
 const CHZZK_APP_CLIENT_SECRET = process.env.CHZZK_APP_CLIENT_SECRET || process.env.CHZZK_CLIENT_SECRET || '';
 const CHZZK_REDIRECT_URI = process.env.CHZZK_REDIRECT_URI || 'https://syura-chat-overlay.onrender.com/auth/chzzk/callback';
 const TOKEN_STORE_FILE = process.env.TOKEN_STORE_FILE || path.join(__dirname, '.data', 'chzzk-tokens.json');
+const MAX_BACKLOG = Number(process.env.MAX_BACKLOG || 20);
 
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
+
 app.use(express.json({ limit: '1mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
 const clients = new Map();
 const oauthStates = new Map();
 let tokenStore = loadTokenStore();
-function loadTokenStore(){try{return fs.existsSync(TOKEN_STORE_FILE)?JSON.parse(fs.readFileSync(TOKEN_STORE_FILE,'utf8'))||{}:{}}catch{return {}}}
-function saveTokenStore(){fs.mkdirSync(path.dirname(TOKEN_STORE_FILE),{recursive:true});fs.writeFileSync(TOKEN_STORE_FILE,JSON.stringify(tokenStore,null,2));}
-function saveClientToken(clientId, tokenResponse){const c=tokenResponse?.content||tokenResponse||{};tokenStore[clientId]={accessToken:c.accessToken,refreshToken:c.refreshToken,tokenType:c.tokenType||'Bearer',expiresIn:Number(c.expiresIn||86400),scope:c.scope||'',savedAt:Date.now(),raw:tokenResponse};saveTokenStore();}
-function getStoredClientToken(clientId){return tokenStore[clientId]?.accessToken||null;}
-function getState(clientId){if(!clients.has(clientId))clients.set(clientId,{clientId,socket:null,reconnectTimer:null,sessionKey:null,status:'idle',lastError:null,lastEventAt:null,shouldReconnect:false});return clients.get(clientId);}
-function emitStatus(clientId){const s=getState(clientId);io.to(clientId).emit('chzzk:status',{clientId,status:s.status,sessionKey:s.sessionKey,lastError:s.lastError,lastEventAt:s.lastEventAt});}
-async function getAccessTokenForClient(clientId){const token=getStoredClientToken(clientId)||process.env[`CHZZK_ACCESS_TOKEN_${clientId}`]||process.env.CHZZK_ACCESS_TOKEN;if(!token||token==='PUT_YOUR_CHZZK_ACCESS_TOKEN_HERE')throw new Error(`CHZZK access token is missing for clientId=${clientId}. Open /login/${clientId} and login first.`);return token;}
-async function chzzkFetch(url, token, options={}){const res=await fetch(url,{...options,headers:{...(token?{Authorization:`Bearer ${token}`}:{ }),Accept:'application/json','Content-Type':'application/json',...(options.headers||{})}});const text=await res.text();let json=null;try{json=text?JSON.parse(text):null}catch{json={raw:text}}if(!res.ok)throw new Error(`CHZZK API ${res.status}: ${text}`);return json;}
-function pickSessionUrl(r){return r?.content?.url||r?.content?.socketUrl||r?.url||r?.socketUrl||null;}
-function parseMaybeJson(v){if(typeof v!=='string')return v;try{return JSON.parse(v)}catch{return v}}
-function pickSessionKey(p){return p?.data?.sessionKey||p?.data?.data?.sessionKey||null;}
-async function subscribeEvent(clientId, sessionKey, token, url, label){const u=new URL(url);u.searchParams.set('sessionKey',sessionKey);await chzzkFetch(u.toString(),token,{method:'POST'});const s=getState(clientId);s.status=`${label}_subscribed`;s.lastError=null;emitStatus(clientId);}
-async function subscribeAll(clientId, sessionKey, token){await subscribeEvent(clientId,sessionKey,token,CHAT_SUBSCRIBE_URL,'chat');try{await subscribeEvent(clientId,sessionKey,token,DONATION_SUBSCRIBE_URL,'donation')}catch(e){console.warn('donation subscribe skipped:',e.message)}}
-function normalizeRole(raw={}){const role=String(raw.userRoleCode||raw.role||raw.userRole||raw.badge||raw.grade||'').toLowerCase();const badgeText=JSON.stringify(raw.badges||raw.badgeList||[]).toLowerCase();if(role.includes('streamer')||role.includes('broadcaster')||role.includes('owner')||badgeText.includes('streamer'))return 'streamer';if(role.includes('manager')||role.includes('moderator')||role.includes('mod')||role.includes('streaming_channel_manager')||role.includes('streaming_chat_manager')||badgeText.includes('manager'))return 'manager';if(role.includes('subscriber')||role.includes('sub')||badgeText.includes('subscriber'))return 'subscriber';if(role.includes('follower')||role.includes('vip')||badgeText.includes('follower'))return 'follower';return 'common_user';}
-function normalizeEmojis(emojis){if(!emojis)return [];if(Array.isArray(emojis))return emojis;if(typeof emojis==='object')return Object.entries(emojis).map(([code,url])=>({code,name:code,url}));return [];}
-function normalizeChat(packet){const data=packet?.data||packet?.body||packet||{};const profile=data.profile||data.user||data.sender||{};const nickname=data.nickname||data.nick||data.displayName||data.name||profile.nickname||profile.nick||profile.displayName||profile.name||'익명';const message=data.message||data.msg||data.content||data.text||data.chat||'';const userId=data.userId||data.senderChannelId||data.memberNo||data.uid||profile.userId||profile.memberNo||nickname;return{type:'chat',clientId:data.clientId||DEFAULT_CLIENT_ID,id:data.id||data.msgId||`${Date.now()}-${Math.random().toString(16).slice(2)}`,createdAt:data.messageTime||Date.now(),nickname,userId:String(userId),message:String(message),role:normalizeRole({...data,...profile}),profileImage:profile.profileImageUrl||profile.profileImage||data.profileImageUrl||data.profileImage||'',emotes:normalizeEmojis(data.emojis||data.emotes||data.emoticons||data.extras?.emojis),raw:packet};}
-function normalizeDonation(packet){const data=packet?.data||packet?.body||packet||{};return{type:'donation',clientId:data.clientId||DEFAULT_CLIENT_ID,id:data.id||data.donationId||`${Date.now()}-${Math.random().toString(16).slice(2)}`,createdAt:Date.now(),nickname:data.donatorNickname||data.nickname||data.nick||data.displayName||'익명',userId:String(data.donatorChannelId||data.userId||data.nickname||'donator'),amount:Number(data.payAmount||data.amount||data.value||0),currency:'치즈',message:String(data.donationText||data.message||data.msg||data.content||''),emotes:normalizeEmojis(data.emojis),raw:packet};}
-function handleChzzkPacket(clientId, packet){packet=parseMaybeJson(packet);if(typeof packet==='string')packet={type:'RAW',data:packet};const s=getState(clientId);const sessionKey=pickSessionKey(packet);if(sessionKey){s.sessionKey=sessionKey;s.status='socket_connected_waiting_subscribe';s.lastError=null;emitStatus(clientId);getAccessTokenForClient(clientId).then(t=>subscribeAll(clientId,sessionKey,t)).catch(e=>{s.status='subscribe_failed';s.lastError=e.message;emitStatus(clientId)});return;}const t=String(packet?.type||packet?.event||packet?.listener||'').toUpperCase();if(t==='CHAT'||t==='MESSAGE'){const payload=normalizeChat(packet);payload.clientId=clientId;s.lastEventAt=Date.now();io.to(clientId).emit('chzzk:chat',payload);return;}if(t.includes('DONATION')||t.includes('DONATE')||t.includes('TIP')||t.includes('MISSION')){const payload=normalizeDonation(packet);payload.clientId=clientId;s.lastEventAt=Date.now();io.to(clientId).emit('chzzk:donation',payload);}}
-async function connectChzzk(clientId=DEFAULT_CLIENT_ID){const s=getState(clientId);s.shouldReconnect=true;if(s.socket&&s.socket.connected)return;if(s.socket){try{s.socket.close()}catch{}}const token=await getAccessTokenForClient(clientId);s.status='creating_session';s.lastError=null;emitStatus(clientId);const session=await chzzkFetch(SESSION_CREATE_URL,token,{method:'GET'});const socketUrl=pickSessionUrl(session);if(!socketUrl)throw new Error(`Cannot find socket URL from CHZZK response: ${JSON.stringify(session)}`);s.status='socket_connecting';emitStatus(clientId);const sock=chzzkSocketIo(socketUrl,{transports:['websocket'],forceNew:true,reconnection:false});s.socket=sock;const originalOnevent=sock.onevent;sock.onevent=function(packet){const args=packet.data||[];const eventName=args[0];const eventData=parseMaybeJson(args[1]);if(eventName){const normalized={type:eventName,data:eventData};io.to(clientId).emit('chzzk:raw',normalized);handleChzzkPacket(clientId,normalized);}return originalOnevent.call(this,packet);};sock.on('connect',()=>{s.status='socket_connected_waiting_session_key';s.lastError=null;emitStatus(clientId)});sock.on('SYSTEM',data=>handleChzzkPacket(clientId,{type:'SYSTEM',data:parseMaybeJson(data)}));sock.on('CHAT',data=>handleChzzkPacket(clientId,{type:'CHAT',data:parseMaybeJson(data)}));sock.on('DONATION',data=>handleChzzkPacket(clientId,{type:'DONATION',data:parseMaybeJson(data)}));sock.on('connect_error',e=>{s.status='socket_error';s.lastError=e.message||String(e);emitStatus(clientId)});sock.on('error',e=>{s.status='socket_error';s.lastError=e.message||String(e);emitStatus(clientId)});sock.on('disconnect',reason=>{s.socket=null;s.sessionKey=null;s.status=`socket_closed:${reason||'unknown'}`;emitStatus(clientId);if(s.shouldReconnect){clearTimeout(s.reconnectTimer);s.reconnectTimer=setTimeout(()=>connectChzzk(clientId).catch(e=>{s.status='reconnect_failed';s.lastError=e.message;emitStatus(clientId)}),3000)}});}
-function disconnectChzzk(clientId=DEFAULT_CLIENT_ID){const s=getState(clientId);s.shouldReconnect=false;clearTimeout(s.reconnectTimer);if(s.socket){try{s.socket.close()}catch{}}s.socket=null;s.sessionKey=null;s.status='disconnected';emitStatus(clientId);}
-io.on('connection',socket=>{const clientId=String(socket.handshake.query.clientId||DEFAULT_CLIENT_ID);socket.join(clientId);emitStatus(clientId);});
-app.get('/',(req,res)=>res.redirect(`/login/${DEFAULT_CLIENT_ID}`));
-app.get('/chat/:clientId',(req,res)=>res.sendFile(path.join(__dirname,'public','chat.html')));
-app.get('/admin/:clientId?',(req,res)=>res.sendFile(path.join(__dirname,'public','admin.html')));
-app.get('/login/:clientId?',(req,res)=>res.sendFile(path.join(__dirname,'public','login.html')));
-app.get('/auth/chzzk',(req,res)=>{const clientId=String(req.query.clientId||DEFAULT_CLIENT_ID).trim()||DEFAULT_CLIENT_ID;if(!CHZZK_APP_CLIENT_ID)return res.status(500).send('Missing CHZZK_APP_CLIENT_ID env');const state=`${clientId}.${crypto.randomBytes(18).toString('base64url')}`;oauthStates.set(state,{clientId,createdAt:Date.now()});const url=new URL(CHZZK_AUTH_URL);url.searchParams.set('clientId',CHZZK_APP_CLIENT_ID);url.searchParams.set('redirectUri',CHZZK_REDIRECT_URI);url.searchParams.set('state',state);res.redirect(url.toString());});
-app.get('/auth/chzzk/callback',async(req,res)=>{const code=String(req.query.code||'');const state=String(req.query.state||'');const stateData=oauthStates.get(state);if(!code||!state||!stateData)return res.status(400).send('Invalid CHZZK callback. code/state is missing or expired.');oauthStates.delete(state);const clientId=stateData.clientId;try{if(!CHZZK_APP_CLIENT_ID||!CHZZK_APP_CLIENT_SECRET)throw new Error('Missing CHZZK_APP_CLIENT_ID or CHZZK_APP_CLIENT_SECRET env');const tokenResponse=await chzzkFetch(CHZZK_TOKEN_URL,'',{method:'POST',body:JSON.stringify({grantType:'authorization_code',clientId:CHZZK_APP_CLIENT_ID,clientSecret:CHZZK_APP_CLIENT_SECRET,code,state})});saveClientToken(clientId,tokenResponse);connectChzzk(clientId).catch(e=>{const st=getState(clientId);st.status='connect_after_login_failed';st.lastError=e.message;emitStatus(clientId)});res.redirect(`/login/${encodeURIComponent(clientId)}?login=success`);}catch(e){const st=getState(clientId);st.status='login_failed';st.lastError=e.message;emitStatus(clientId);res.status(500).send(`CHZZK login failed: ${e.message}`)}});
-app.get('/api/auth/status/:clientId',(req,res)=>{const clientId=req.params.clientId||DEFAULT_CLIENT_ID;const s=getState(clientId);const saved=tokenStore[clientId];res.json({ok:true,clientId,hasToken:Boolean(saved?.accessToken||process.env[`CHZZK_ACCESS_TOKEN_${clientId}`]||process.env.CHZZK_ACCESS_TOKEN),tokenSavedAt:saved?.savedAt||null,status:s.status,sessionKey:s.sessionKey,lastError:s.lastError,obsUrl:`/chat/${clientId}`});});
-app.post('/api/connect/:clientId',async(req,res)=>{const clientId=req.params.clientId||DEFAULT_CLIENT_ID;try{await connectChzzk(clientId);res.json({ok:true,clientId,status:getState(clientId).status});}catch(e){const s=getState(clientId);s.status='connect_failed';s.lastError=e.message;emitStatus(clientId);res.status(500).json({ok:false,error:e.message});}});
-app.post('/api/disconnect/:clientId',(req,res)=>{const clientId=req.params.clientId||DEFAULT_CLIENT_ID;disconnectChzzk(clientId);res.json({ok:true,clientId});});
-app.post('/api/test/chat/:clientId',(req,res)=>{const clientId=req.params.clientId||DEFAULT_CLIENT_ID;const payload={type:'chat',clientId,id:`test-${Date.now()}`,createdAt:Date.now(),nickname:req.body.nickname||'치지직테스트',userId:'test-user',role:req.body.role||'streamer',message:req.body.message||'치지직 채팅 테스트입니다 {:d_51:}',emotes:req.body.emotes||[{code:'{:d_51:}',name:'{:d_51:}',url:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png'}]};io.to(clientId).emit('chzzk:chat',payload);res.json({ok:true,payload});});
-app.post('/api/test/donation/:clientId',(req,res)=>{const clientId=req.params.clientId||DEFAULT_CLIENT_ID;const payload={type:'donation',clientId,id:`donation-test-${Date.now()}`,createdAt:Date.now(),nickname:req.body.nickname||'치즈테스트',userId:'test-donor',amount:Number(req.body.amount||1000),currency:'치즈',message:req.body.message||'방송 전 치즈 알림 테스트입니다'};io.to(clientId).emit('chzzk:donation',payload);res.json({ok:true,payload});});
-server.listen(PORT,()=>{console.log(`CHZZK StreamElements overlay server listening on ${PORT}`);if(process.env.CHZZK_AUTOCONNECT==='true')connectChzzk(DEFAULT_CLIENT_ID).catch(console.error);});
+
+function log(clientId, ...args) {
+  console.log(`[${new Date().toISOString()}] [${clientId}]`, ...args);
+}
+
+function loadTokenStore() {
+  try {
+    if (!fs.existsSync(TOKEN_STORE_FILE)) return {};
+    return JSON.parse(fs.readFileSync(TOKEN_STORE_FILE, 'utf8')) || {};
+  } catch {
+    return {};
+  }
+}
+
+function saveTokenStore() {
+  fs.mkdirSync(path.dirname(TOKEN_STORE_FILE), { recursive: true });
+  fs.writeFileSync(TOKEN_STORE_FILE, JSON.stringify(tokenStore, null, 2));
+}
+
+function saveClientToken(clientId, tokenResponse) {
+  const content = tokenResponse?.content || tokenResponse || {};
+  tokenStore[clientId] = {
+    accessToken: content.accessToken,
+    refreshToken: content.refreshToken,
+    tokenType: content.tokenType || 'Bearer',
+    expiresIn: Number(content.expiresIn || 86400),
+    scope: content.scope || '',
+    savedAt: Date.now(),
+    raw: tokenResponse
+  };
+  saveTokenStore();
+}
+
+function getState(clientId) {
+  if (!clients.has(clientId)) {
+    clients.set(clientId, {
+      clientId,
+      socket: null,
+      reconnectTimer: null,
+      sessionKey: null,
+      status: 'idle',
+      lastError: null,
+      lastEventAt: null,
+      lastRawEvent: null,
+      subscribed: [],
+      shouldReconnect: false,
+      backlog: []
+    });
+  }
+  return clients.get(clientId);
+}
+
+function publicStatus(clientId) {
+  const s = getState(clientId);
+  const saved = tokenStore[clientId];
+  return {
+    ok: true,
+    clientId,
+    hasToken: Boolean(saved?.accessToken || process.env[`CHZZK_ACCESS_TOKEN_${clientId}`] || process.env.CHZZK_ACCESS_TOKEN),
+    tokenSavedAt: saved?.savedAt || null,
+    status: s.status,
+    sessionKey: s.sessionKey,
+    subscribed: s.subscribed,
+    lastError: s.lastError,
+    lastEventAt: s.lastEventAt,
+    lastRawEvent: s.lastRawEvent,
+    obsUrl: `/chat/${clientId}`
+  };
+}
+
+function emitStatus(clientId) {
+  io.to(clientId).emit('chzzk:status', publicStatus(clientId));
+}
+
+async function getAccessTokenForClient(clientId) {
+  const token = tokenStore[clientId]?.accessToken || process.env[`CHZZK_ACCESS_TOKEN_${clientId}`] || process.env.CHZZK_ACCESS_TOKEN;
+  if (!token || token === 'PUT_YOUR_CHZZK_ACCESS_TOKEN_HERE') {
+    throw new Error(`CHZZK access token is missing for clientId=${clientId}. Open /login/${clientId} and login first.`);
+  }
+  return token;
+}
+
+async function chzzkFetch(url, token, options = {}) {
+  const res = await fetch(url, {
+    ...options,
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+      ...(options.headers || {})
+    }
+  });
+
+  const text = await res.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch { json = { raw: text }; }
+
+  if (!res.ok) throw new Error(`CHZZK API ${res.status}: ${text}`);
+  return json;
+}
+
+function parseMaybeJson(value) {
+  if (typeof value !== 'string') return value;
+  try { return JSON.parse(value); } catch { return value; }
+}
+
+function pickSessionUrl(response) {
+  return response?.content?.url || response?.content?.socketUrl || response?.url || response?.socketUrl || null;
+}
+
+function unwrapPacket(input) {
+  let packet = parseMaybeJson(input);
+  if (typeof packet === 'string') return { type: 'RAW', data: packet };
+
+  if (packet?.data && typeof packet.data === 'string') {
+    packet = { ...packet, data: parseMaybeJson(packet.data) };
+  }
+  if (packet?.body && typeof packet.body === 'string') {
+    packet = { ...packet, body: parseMaybeJson(packet.body) };
+  }
+  return packet || { type: 'EMPTY', data: null };
+}
+
+function pickSessionKey(packet) {
+  const p = unwrapPacket(packet);
+  const d = parseMaybeJson(p?.data);
+  if (d?.sessionKey) return d.sessionKey;
+  if (d?.data?.sessionKey) return d.data.sessionKey;
+  if (p?.sessionKey) return p.sessionKey;
+  return null;
+}
+
+async function subscribeEvent(clientId, sessionKey, token, endpoint, eventName) {
+  const url = new URL(endpoint);
+  url.searchParams.set('sessionKey', sessionKey);
+  await chzzkFetch(url.toString(), token, { method: 'POST' });
+
+  const s = getState(clientId);
+  if (!s.subscribed.includes(eventName)) s.subscribed.push(eventName);
+  s.status = `${eventName.toLowerCase()}_subscribed`;
+  s.lastError = null;
+  emitStatus(clientId);
+}
+
+async function subscribeAll(clientId, sessionKey, token) {
+  await subscribeEvent(clientId, sessionKey, token, CHAT_SUBSCRIBE_URL, 'CHAT');
+  try {
+    await subscribeEvent(clientId, sessionKey, token, DONATION_SUBSCRIBE_URL, 'DONATION');
+  } catch (error) {
+    log(clientId, 'donation subscribe skipped:', error.message);
+  }
+  const s = getState(clientId);
+  s.status = 'subscribed';
+  emitStatus(clientId);
+}
+
+function normalizeRole(data = {}) {
+  const profile = parseMaybeJson(data.profile) || {};
+  const role = String(
+    data.userRoleCode || profile.userRoleCode || data.role || data.userRole || data.badge || data.grade || ''
+  ).toLowerCase();
+  const badgeText = JSON.stringify(data.badges || profile.badges || data.badgeList || []).toLowerCase();
+
+  if (role.includes('streamer') || role.includes('broadcaster') || role.includes('owner') || badgeText.includes('streamer')) return 'streamer';
+  if (role.includes('manager') || role.includes('moderator') || role.includes('mod') || role.includes('streaming_channel_manager') || role.includes('streaming_chat_manager') || badgeText.includes('manager')) return 'manager';
+  if (role.includes('subscriber') || role.includes('sub') || badgeText.includes('subscriber')) return 'subscriber';
+  if (role.includes('follower') || role.includes('vip') || badgeText.includes('follower')) return 'follower';
+  return 'common_user';
+}
+
+function normalizeEmojis(emojis) {
+  const parsed = parseMaybeJson(emojis);
+  if (!parsed) return [];
+  if (Array.isArray(parsed)) return parsed;
+  if (typeof parsed === 'object') return Object.entries(parsed).map(([code, url]) => ({ code, name: code, url }));
+  return [];
+}
+
+function normalizeChat(packet) {
+  const p = unwrapPacket(packet);
+  const data = parseMaybeJson(p?.data || p?.body || p) || {};
+  const profile = parseMaybeJson(data.profile) || parseMaybeJson(data.user) || parseMaybeJson(data.sender) || {};
+
+  const nickname =
+    data.nickname || data.nick || data.displayName || data.name ||
+    profile.nickname || profile.nick || profile.displayName || profile.name || '익명';
+
+  const message = data.content || data.message || data.msg || data.text || data.chat || '';
+  const userId = data.senderChannelId || data.userId || data.memberNo || data.uid || profile.userId || profile.memberNo || nickname;
+
+  return {
+    type: 'chat',
+    clientId: data.clientId || DEFAULT_CLIENT_ID,
+    id: data.messageId || data.id || data.msgId || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    createdAt: Number(data.messageTime || Date.now()),
+    nickname,
+    userId: String(userId),
+    message: String(message),
+    role: normalizeRole({ ...data, profile }),
+    profileImage: profile.profileImageUrl || profile.profileImage || data.profileImageUrl || data.profileImage || '',
+    emotes: normalizeEmojis(data.emojis || data.emotes || data.emoticons || data.extras?.emojis),
+    raw: p
+  };
+}
+
+function normalizeDonation(packet) {
+  const p = unwrapPacket(packet);
+  const data = parseMaybeJson(p?.data || p?.body || p) || {};
+  return {
+    type: 'donation',
+    clientId: data.clientId || DEFAULT_CLIENT_ID,
+    id: data.donationId || data.id || `${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    createdAt: Date.now(),
+    nickname: data.donatorNickname || data.nickname || data.nick || data.displayName || '익명',
+    userId: String(data.donatorChannelId || data.userId || data.nickname || 'donator'),
+    amount: Number(data.payAmount || data.amount || data.value || 0),
+    currency: '치즈',
+    message: String(data.donationText || data.message || data.msg || data.content || ''),
+    emotes: normalizeEmojis(data.emojis),
+    raw: p
+  };
+}
+
+function rememberAndEmit(clientId, eventName, payload) {
+  const s = getState(clientId);
+  s.lastEventAt = Date.now();
+  s.backlog.push({ eventName, payload, at: Date.now() });
+  if (s.backlog.length > MAX_BACKLOG) s.backlog.splice(0, s.backlog.length - MAX_BACKLOG);
+  io.to(clientId).emit(eventName, payload);
+}
+
+function handleChzzkPacket(clientId, packet) {
+  const p = unwrapPacket(packet);
+  const s = getState(clientId);
+  s.lastRawEvent = p;
+
+  const sessionKey = pickSessionKey(p);
+  if (sessionKey) {
+    s.sessionKey = sessionKey;
+    s.status = 'socket_connected_waiting_subscribe';
+    s.lastError = null;
+    emitStatus(clientId);
+    getAccessTokenForClient(clientId)
+      .then(token => subscribeAll(clientId, sessionKey, token))
+      .catch(error => {
+        s.status = 'subscribe_failed';
+        s.lastError = error.message;
+        emitStatus(clientId);
+      });
+    return;
+  }
+
+  const type = String(p?.type || p?.event || p?.listener || '').toUpperCase();
+  if (type === 'CHAT' || type === 'MESSAGE') {
+    const payload = normalizeChat(p);
+    payload.clientId = clientId;
+    rememberAndEmit(clientId, 'chzzk:chat', payload);
+    log(clientId, 'CHAT', payload.nickname, payload.message);
+    return;
+  }
+
+  if (type.includes('DONATION') || type.includes('DONATE') || type.includes('TIP') || type.includes('MISSION')) {
+    const payload = normalizeDonation(p);
+    payload.clientId = clientId;
+    rememberAndEmit(clientId, 'chzzk:donation', payload);
+    log(clientId, 'DONATION', payload.nickname, payload.amount, payload.message);
+    return;
+  }
+
+  if (type === 'SYSTEM') {
+    const d = parseMaybeJson(p.data) || {};
+    if (d.type === 'subscribed') {
+      if (!s.subscribed.includes(d.data?.eventType)) s.subscribed.push(d.data?.eventType);
+      s.status = 'subscribed';
+      emitStatus(clientId);
+    }
+  }
+}
+
+function connectSocketIoSession(clientId, socketUrl) {
+  const socket = chzzkIo(socketUrl, {
+    transports: ['websocket'],
+    forceNew: true,
+    reconnection: false,
+    timeout: 10000
+  });
+
+  const originalOnevent = socket.onevent;
+  socket.onevent = function(packet) {
+    const args = packet?.data || [];
+    const eventName = args[0];
+    const eventPayload = args.length > 1 ? args[1] : null;
+    if (eventName) {
+      handleChzzkPacket(clientId, { type: eventName, data: parseMaybeJson(eventPayload) });
+    }
+    return originalOnevent.call(this, packet);
+  };
+
+  socket.on('SYSTEM', data => handleChzzkPacket(clientId, { type: 'SYSTEM', data: parseMaybeJson(data) }));
+  socket.on('CHAT', data => handleChzzkPacket(clientId, { type: 'CHAT', data: parseMaybeJson(data) }));
+  socket.on('DONATION', data => handleChzzkPacket(clientId, { type: 'DONATION', data: parseMaybeJson(data) }));
+
+  return socket;
+}
+
+async function connectChzzk(clientId = DEFAULT_CLIENT_ID) {
+  const s = getState(clientId);
+  s.shouldReconnect = true;
+
+  if (s.socket?.connected) return;
+  if (s.socket) {
+    try { s.socket.close(); } catch {}
+    try { s.socket.disconnect(); } catch {}
+  }
+
+  const token = await getAccessTokenForClient(clientId);
+  s.status = 'creating_session';
+  s.lastError = null;
+  s.subscribed = [];
+  emitStatus(clientId);
+
+  const session = await chzzkFetch(SESSION_CREATE_URL, token, { method: 'GET' });
+  const socketUrl = pickSessionUrl(session);
+  if (!socketUrl) throw new Error(`Cannot find socket URL from CHZZK response: ${JSON.stringify(session)}`);
+
+  log(clientId, 'session url issued');
+  s.status = 'socket_connecting';
+  emitStatus(clientId);
+
+  const socket = connectSocketIoSession(clientId, socketUrl);
+  s.socket = socket;
+
+  socket.on('connect', () => {
+    s.status = 'socket_connected_waiting_session_key';
+    s.lastError = null;
+    emitStatus(clientId);
+    log(clientId, 'socket connected');
+  });
+
+  socket.on('connect_error', error => {
+    s.status = 'socket_error';
+    s.lastError = error?.message || String(error);
+    emitStatus(clientId);
+    log(clientId, 'connect_error', s.lastError);
+  });
+
+  socket.on('error', error => {
+    s.status = 'socket_error';
+    s.lastError = error?.message || String(error);
+    emitStatus(clientId);
+    log(clientId, 'socket error', s.lastError);
+  });
+
+  socket.on('disconnect', reason => {
+    s.socket = null;
+    s.sessionKey = null;
+    s.status = `socket_closed:${reason || 'unknown'}`;
+    emitStatus(clientId);
+    log(clientId, 'socket closed', reason);
+
+    if (s.shouldReconnect) {
+      clearTimeout(s.reconnectTimer);
+      s.reconnectTimer = setTimeout(() => {
+        connectChzzk(clientId).catch(error => {
+          s.status = 'reconnect_failed';
+          s.lastError = error.message;
+          emitStatus(clientId);
+        });
+      }, 3000);
+    }
+  });
+}
+
+function disconnectChzzk(clientId = DEFAULT_CLIENT_ID) {
+  const s = getState(clientId);
+  s.shouldReconnect = false;
+  clearTimeout(s.reconnectTimer);
+  if (s.socket) {
+    try { s.socket.close(); } catch {}
+    try { s.socket.disconnect(); } catch {}
+  }
+  s.socket = null;
+  s.sessionKey = null;
+  s.status = 'disconnected';
+  emitStatus(clientId);
+}
+
+io.on('connection', socket => {
+  const clientId = String(socket.handshake.query.clientId || DEFAULT_CLIENT_ID);
+  socket.join(clientId);
+  emitStatus(clientId);
+
+  const s = getState(clientId);
+  for (const item of s.backlog.slice(-5)) {
+    socket.emit(item.eventName, item.payload);
+  }
+});
+
+app.get('/', (req, res) => res.redirect(`/login/${DEFAULT_CLIENT_ID}`));
+app.get('/chat/:clientId', (req, res) => res.sendFile(path.join(__dirname, 'public', 'chat.html')));
+app.get('/admin/:clientId?', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/login/:clientId?', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+
+app.get('/auth/chzzk', (req, res) => {
+  const clientId = String(req.query.clientId || DEFAULT_CLIENT_ID).trim() || DEFAULT_CLIENT_ID;
+  if (!CHZZK_APP_CLIENT_ID) return res.status(500).send('Missing CHZZK_APP_CLIENT_ID env');
+
+  const state = `${clientId}.${crypto.randomBytes(18).toString('base64url')}`;
+  oauthStates.set(state, { clientId, createdAt: Date.now() });
+
+  const url = new URL(CHZZK_AUTH_URL);
+  url.searchParams.set('clientId', CHZZK_APP_CLIENT_ID);
+  url.searchParams.set('redirectUri', CHZZK_REDIRECT_URI);
+  url.searchParams.set('state', state);
+  res.redirect(url.toString());
+});
+
+app.get('/auth/chzzk/callback', async (req, res) => {
+  const code = String(req.query.code || '');
+  const state = String(req.query.state || '');
+  const stateData = oauthStates.get(state);
+  if (!code || !state || !stateData) return res.status(400).send('Invalid CHZZK callback. code/state is missing or expired.');
+
+  oauthStates.delete(state);
+  const clientId = stateData.clientId;
+
+  try {
+    if (!CHZZK_APP_CLIENT_ID || !CHZZK_APP_CLIENT_SECRET) throw new Error('Missing CHZZK_APP_CLIENT_ID or CHZZK_APP_CLIENT_SECRET env');
+
+    const tokenResponse = await chzzkFetch(CHZZK_TOKEN_URL, '', {
+      method: 'POST',
+      body: JSON.stringify({
+        grantType: 'authorization_code',
+        clientId: CHZZK_APP_CLIENT_ID,
+        clientSecret: CHZZK_APP_CLIENT_SECRET,
+        code,
+        state
+      })
+    });
+
+    saveClientToken(clientId, tokenResponse);
+    connectChzzk(clientId).catch(error => {
+      const s = getState(clientId);
+      s.status = 'connect_after_login_failed';
+      s.lastError = error.message;
+      emitStatus(clientId);
+    });
+
+    res.redirect(`/login/${encodeURIComponent(clientId)}?login=success`);
+  } catch (error) {
+    const s = getState(clientId);
+    s.status = 'login_failed';
+    s.lastError = error.message;
+    emitStatus(clientId);
+    res.status(500).send(`CHZZK login failed: ${error.message}`);
+  }
+});
+
+app.get('/api/auth/status/:clientId', (req, res) => res.json(publicStatus(req.params.clientId || DEFAULT_CLIENT_ID)));
+app.get('/api/status/:clientId', (req, res) => res.json(publicStatus(req.params.clientId || DEFAULT_CLIENT_ID)));
+
+app.post('/api/connect/:clientId', async (req, res) => {
+  const clientId = req.params.clientId || DEFAULT_CLIENT_ID;
+  try {
+    await connectChzzk(clientId);
+    res.json(publicStatus(clientId));
+  } catch (error) {
+    const s = getState(clientId);
+    s.status = 'connect_failed';
+    s.lastError = error.message;
+    emitStatus(clientId);
+    res.status(500).json(publicStatus(clientId));
+  }
+});
+
+app.post('/api/disconnect/:clientId', (req, res) => {
+  const clientId = req.params.clientId || DEFAULT_CLIENT_ID;
+  disconnectChzzk(clientId);
+  res.json(publicStatus(clientId));
+});
+
+app.post('/api/test/chat/:clientId', (req, res) => {
+  const clientId = req.params.clientId || DEFAULT_CLIENT_ID;
+  const payload = {
+    type: 'chat',
+    clientId,
+    id: `test-${Date.now()}`,
+    createdAt: Date.now(),
+    nickname: req.body.nickname || '치지직테스트',
+    userId: 'test-user',
+    role: req.body.role || 'streamer',
+    message: req.body.message || '치지직 채팅 테스트입니다 {:d_51:}',
+    emotes: req.body.emotes || [{ code: '{:d_51:}', name: '{:d_51:}', url: 'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png' }]
+  };
+  rememberAndEmit(clientId, 'chzzk:chat', payload);
+  res.json({ ok: true, payload, status: publicStatus(clientId) });
+});
+
+app.post('/api/test/donation/:clientId', (req, res) => {
+  const clientId = req.params.clientId || DEFAULT_CLIENT_ID;
+  const payload = {
+    type: 'donation',
+    clientId,
+    id: `donation-test-${Date.now()}`,
+    createdAt: Date.now(),
+    nickname: req.body.nickname || '치즈테스트',
+    userId: 'test-donor',
+    amount: Number(req.body.amount || 1000),
+    currency: '치즈',
+    message: req.body.message || '방송 전 치즈 알림 테스트입니다'
+  };
+  rememberAndEmit(clientId, 'chzzk:donation', payload);
+  res.json({ ok: true, payload, status: publicStatus(clientId) });
+});
+
+app.post('/api/test/original/:clientId/:button', (req, res) => {
+  const clientId = req.params.clientId || DEFAULT_CLIENT_ID;
+  const button = req.params.button || 'testtestMessage';
+  const detail = { listener: 'widget-button', event: { field: button } };
+  rememberAndEmit(clientId, 'se:event', detail);
+  res.json({ ok: true, detail, status: publicStatus(clientId) });
+});
+
+server.listen(PORT, () => {
+  console.log(`CHZZK StreamElements overlay server listening on ${PORT}`);
+  if (process.env.CHZZK_AUTOCONNECT === 'true') {
+    connectChzzk(DEFAULT_CLIENT_ID).catch(console.error);
+  }
+});
