@@ -230,6 +230,26 @@
     document.head.appendChild(style);
   }
 
+
+  const renderedKeys = new Map();
+  function payloadKey(type, payload) {
+    const rawData = payload?.raw?.data || {};
+    const time = rawData.messageTime || payload?.createdAt || '';
+    const sender = rawData.senderChannelId || payload?.userId || payload?.nickname || '';
+    const text = rawData.content || payload?.message || payload?.id || '';
+    return `${type}|${sender}|${time}|${text}`;
+  }
+  function once(type, handler) {
+    return (payload) => {
+      const key = payloadKey(type, payload);
+      const now = Date.now();
+      for (const [k, t] of renderedKeys.entries()) if (now - t > 15000) renderedKeys.delete(k);
+      if (renderedKeys.has(key)) { log('duplicate skipped', key); return; }
+      renderedKeys.set(key, now);
+      handler(payload);
+    };
+  }
+
   function connectSocket(){
     socket = io('/', {
       transports:['websocket','polling'],
@@ -241,10 +261,12 @@
     });
     socket.on('connect', () => log('socket connected', socket.id));
     socket.on('connect_error', e => console.error('[CHZZK native exact] socket error', e?.message || e));
-    socket.on('chzzk:chat', renderChat);
-    socket.on(`chzzk:chat:${clientId}`, renderChat);
-    socket.on('chzzk:donation', renderDonation);
-    socket.on(`chzzk:donation:${clientId}`, renderDonation);
+    const onChat = once('chat', renderChat);
+    const onDonation = once('donation', renderDonation);
+    socket.on('chzzk:chat', onChat);
+    socket.on(`chzzk:chat:${clientId}`, onChat);
+    socket.on('chzzk:donation', onDonation);
+    socket.on(`chzzk:donation:${clientId}`, onDonation);
     socket.on('chzzk:status', s => log('status', s));
   }
 

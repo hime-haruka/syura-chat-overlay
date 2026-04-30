@@ -29,7 +29,17 @@ const server = http.createServer(app);
 const io = new Server(server, { cors: { origin: '*' } });
 
 app.use(express.json({ limit: '1mb' }));
-app.use(express.static(path.join(__dirname, 'public')));
+
+app.use((req, res, next) => {
+  if (req.path.startsWith('/chat') || req.path.startsWith('/login') || req.path.startsWith('/debug') || req.path.startsWith('/overlays')) {
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+  }
+  next();
+});
+app.use(express.static(path.join(__dirname, 'public'), { etag: false, lastModified: false, maxAge: 0 }));
 
 const clients = new Map();
 const oauthStates = new Map();
@@ -80,7 +90,8 @@ function getState(clientId) {
       lastRawEvent: null,
       subscribed: [],
       shouldReconnect: false,
-      backlog: []
+      backlog: [],
+      seenEventKeys: new Map()
     });
   }
   return clients.get(clientId);
@@ -257,7 +268,34 @@ function normalizeDonation(packet) {
   };
 }
 
+function eventDedupeKey(eventName, payload) {
+  const rawData = payload?.raw?.data || {};
+  const messageTime = rawData.messageTime || payload?.createdAt || '';
+  const sender = rawData.senderChannelId || payload?.userId || payload?.nickname || '';
+  const content = rawData.content || payload?.message || '';
+  const donationId = rawData.donationId || payload?.id || '';
+  if (eventName === 'chzzk:chat') return `${eventName}|${sender}|${messageTime}|${content}`;
+  if (eventName === 'chzzk:donation') return `${eventName}|${sender}|${messageTime}|${donationId}|${payload?.amount}|${content}`;
+  return `${eventName}|${payload?.id || ''}|${sender}|${messageTime}|${content}`;
+}
+
+function shouldEmitEvent(clientId, eventName, payload) {
+  const s = getState(clientId);
+  const key = eventDedupeKey(eventName, payload);
+  const now = Date.now();
+  for (const [k, t] of s.seenEventKeys.entries()) {
+    if (now - t > 15000) s.seenEventKeys.delete(k);
+  }
+  if (s.seenEventKeys.has(key)) return false;
+  s.seenEventKeys.set(key, now);
+  return true;
+}
+
 function rememberAndEmit(clientId, eventName, payload) {
+  if (!shouldEmitEvent(clientId, eventName, payload)) {
+    log(clientId, 'duplicate event skipped', eventName, payload?.id || payload?.raw?.data?.messageTime || '');
+    return;
+  }
   const s = getState(clientId);
   s.lastEventAt = Date.now();
   s.backlog.push({ eventName, payload, at: Date.now() });
@@ -448,11 +486,8 @@ io.on('connection', socket => {
   socket.emit('chzzk:status', publicStatus(clientId));
   io.to(`debug:${clientId}`).emit('debug:socket', { type: 'connected', socketId: socket.id, clientId, roomSize, at: Date.now() });
 
-  const s = getState(clientId);
-  for (const item of s.backlog.slice(-10)) {
-    socket.emit(item.eventName, item.payload);
-    socket.emit(`${item.eventName}:${clientId}`, item.payload);
-  }
+  // No automatic backlog replay for overlay sockets.
+  // Old replay caused preview/debug pages to render several previous messages at once.
 
   socket.on('disconnect', reason => {
     const size = io.sockets.adapter.rooms.get(clientId)?.size || 0;
