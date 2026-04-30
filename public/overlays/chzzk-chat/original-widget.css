@@ -1,21 +1,21 @@
 :root {
-  --namesSize: {namesSize}px;
-  --msgSize: {msgSize}px;
-  --msgback: {msgback};
-  --namesBold: {namesBold};
-  --msgBold: {msgBold};
-  --textback: {textback};
-  --namesFont: '{namesFont}', sans-serif;
-  --msgFont: '{msgFont}', sans-serif;
-  --namescolor: {namescolor};
-  --outlinecol: {accentcolor};
-  --accentcolor: {accentcolor};
-  --msgcolor: {msgcolor};
-  --alerttext: {alerttext};
-  --msgHide: {msgHide}s;
-  --alertback: {alertsboxcol};
-  --alerttext: {alerttext};
-  --accentcolor: {accentcolor};
+  --namesSize: 16px;
+  --msgSize: 16px;
+  --msgback: #ffffff;
+  --namesBold: 700;
+  --msgBold: 700;
+  --textback: rgba(173, 143, 255, 0);
+  --namesFont: 'Quicksand', sans-serif;
+  --msgFont: 'Quicksand', sans-serif;
+  --namescolor: #ffffff;
+  --outlinecol: #dcbb96;
+  --accentcolor: #dcbb96;
+  --msgcolor: #47843b;
+  --alerttext: #47843b;
+  --msgHide: 7s;
+  --alertback: #ffffff;
+  --alerttext: #47843b;
+  --accentcolor: #dcbb96;
 }
 
 
@@ -154,8 +154,8 @@
 }
 
 .animationOut {
-    animation: fadeOut 0.5s ease {msgHide}s forwards;
-    -webkit-animation: fadeOut 0.5s ease {msgHide}s forwards;
+    animation: fadeOut 0.5s ease 7s forwards;
+    -webkit-animation: fadeOut 0.5s ease 7s forwards;
 }
 
 .badgescont {
@@ -175,8 +175,8 @@
   text-shadow: 0px;
   overflow: hidden; 
   overflow: visible;
-  background: {badgesContcolor};
-  height: {namesSize}px;
+  background: #bce78e;
+  height: 16px;
   font-size: 16px;
   font-weight: 300;
   border-radius: 15px;
@@ -200,17 +200,17 @@
   transform: translateY(-50%);
   opacity: 1;
   top: 50%;
-  height: calc({namesSize}px - 2px);
+  height: calc(16px - 2px);
 }
 
 .custombadge {
   display: inline-block;
   position: relative;
-  height: calc({namesSize}px - 2px);
+  height: calc(16px - 2px);
   top: 50%;
   transform: translateY(-50%);
   left: 0;
-  width: calc({namesSize}px - 2px);
+  width: calc(16px - 2px);
   margin-left: 3px;
   z-index: 3; 
   vertical-align: top;
@@ -219,8 +219,8 @@
 .custombadge svg {
   display: inline-block;
   position: absolute;
-  height: calc({namesSize}px - 2px);
-  width: calc({namesSize}px - 2px);
+  height: calc(16px - 2px);
+  width: calc(16px - 2px);
   z-index: 3; 
   top: 0px;
   left: 0;
@@ -231,7 +231,7 @@
 .custombadge img {
   display: inline-block;
   position: absolute;
-  width: calc({namesSize}px - 2px);
+  width: calc(16px - 2px);
   z-index: 3; 
   top: 0px;
   left: 0;
@@ -268,24 +268,24 @@
   transform: translateX(-50%);
   padding: 7px 65px;
   border-radius: 30px;
-  background: {alertsboxcol};
-  border: 3px solid {bordercol};
+  background: #ffffff;
+  border: 3px solid #97d561;
   text-align: center;
  }
 
 .alerttext {
   position: relative;
   top: 0px;
-  font-weight: {msgBold};
+  font-weight: 700;
   z-index: 5;
-  font-size: {alertSize}px;
+  font-size: 16px;
   margin-left: 4px;
 }
 
 .alertName {
-  font-size: {alertSize}px;
-  font-weight: {namesBold};
-  color: {alertnames};
+  font-size: 16px;
+  font-weight: 700;
+  color: #47843b;
 }
 
 
@@ -418,7 +418,7 @@
   overflow: visible;
   font-weight: var(--namesBold);
   color: var(--namescolor);
-  background: {nameback};
+  background: #97d561;
   left: 53px;
   top: 0px;
   margin-right: 20px;
@@ -443,12 +443,12 @@
   color: var(--msgcolor);
   font-weight: var(--msgBold);
   top: 0px;
-  background: {msgback};
+  background: #ffffff;
   padding: 16px 45px 15px 35px;
   animation: fadeIn .55s linear 0.4s forwards;
   opacity: 0;
   border-radius: 20px;
-  box-shadow: -3px 5px 0 {bordercol};
+  box-shadow: -3px 5px 0 #97d561;
  }
 
 

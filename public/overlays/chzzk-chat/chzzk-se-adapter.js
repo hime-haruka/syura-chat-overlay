@@ -3,139 +3,15 @@
   const socket = io({ query: { clientId } });
   const pending = [];
   let widgetLoaded = false;
-
-  const BADGE_URLS = {
-    vip: 'https://static-cdn.jtvnw.net/badges/v1/b817aba4-fad8-49e2-b88a-7cc744dfa6ec/3',
-    subscriber: 'https://static-cdn.jtvnw.net/badges/v1/d12a2e27-16f6-41d0-ab77-b780518f00a3/3',
-    broadcaster: 'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/3',
-    moderator: 'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/3'
-  };
-
-  function fireSE(listener, event) {
-    const run = () => window.dispatchEvent(new CustomEvent('onEventReceived', {
-      detail: { listener, event }
-    }));
-
-    if (!widgetLoaded) pending.push(run);
-    else run();
-  }
-
-  function fireWidgetLoad() {
-    if (widgetLoaded) return;
-
-    window.dispatchEvent(new CustomEvent('onWidgetLoad', {
-      detail: {
-        fieldData: window.SE_FIELD_DATA || {},
-        channel: {
-          username: clientId,
-          providerId: '100135110'
-        },
-        session: {
-          data: {
-            currency: '₩'
-          }
-        }
-      }
-    }));
-
-    widgetLoaded = true;
-    while (pending.length) pending.shift()();
-  }
-
-  function roleToTags(role) {
-    const r = String(role || 'common_user').toLowerCase();
-    return {
-      broadcaster: r === 'streamer' || r === 'broadcaster' ? '1' : '0',
-      mod: r === 'manager' || r === 'moderator' || r === 'mod' ? '1' : '0',
-      subscriber: r === 'subscriber' || r === 'sub' ? '1' : '0',
-      vip: r === 'follower' || r === 'vip' ? '1' : '0',
-      badges: '',
-      color: '',
-      'display-name': ''
-    };
-  }
-
-  function roleToBadges(role) {
-    const tags = roleToTags(role);
-    const badges = [];
-    if (tags.broadcaster === '1') badges.push({ type: 'broadcaster', version: '1', url: BADGE_URLS.broadcaster });
-    if (tags.mod === '1') badges.push({ type: 'moderator', version: '1', url: BADGE_URLS.moderator });
-    if (tags.subscriber === '1') badges.push({ type: 'subscriber', version: '1', url: BADGE_URLS.subscriber });
-    if (tags.vip === '1') badges.push({ type: 'vip', version: '1', url: BADGE_URLS.vip });
-    return badges;
-  }
-
-  function normalizeEmotes(rawEmotes) {
-    if (!Array.isArray(rawEmotes)) return [];
-    return rawEmotes
-      .map((e) => {
-        const name = e.code || e.name || e.id || '';
-        const url = e.url || e.imageUrl || e.image || '';
-        if (!name || !url) return null;
-        return {
-          type: 'emote',
-          name,
-          id: e.id || name,
-          urls: { 1: url, 2: url, 4: url }
-        };
-      })
-      .filter(Boolean);
-  }
-
-  function toSEMessage(payload) {
-    const displayName = payload.nickname || '익명';
-    const tags = roleToTags(payload.role);
-    tags['display-name'] = displayName;
-    tags.badges = roleToBadges(payload.role).map((b) => `${b.type}/${b.version}`).join(',');
-
-    return {
-      data: {
-        msgId: payload.id || `chzzk-${Date.now()}`,
-        userId: payload.userId || displayName,
-        displayName,
-        nick: displayName,
-        username: displayName,
-        text: String(payload.message || ''),
-        emotes: normalizeEmotes(payload.emotes),
-        badges: roleToBadges(payload.role),
-        tags,
-        isAction: false
-      }
-    };
-  }
-
-  function toSETip(payload) {
-    const amount = Number(payload.amount || 0);
-    return {
-      name: payload.nickname || '익명',
-      displayName: payload.nickname || '익명',
-      amount,
-      formattedAmount: amount.toLocaleString('ko-KR'),
-      currency: payload.currency || 'KRW',
-      message: payload.message || '',
-      text: payload.message || ''
-    };
-  }
-
-  socket.on('connect', () => {
-    window.__CHZZK_OVERLAY_CONNECTED__ = true;
-  });
-
-  socket.on('chzzk:chat', (payload) => {
-    fireSE('message', toSEMessage(payload));
-  });
-
-  socket.on('chzzk:donation', (payload) => {
-    fireSE('tip-latest', toSETip(payload));
-  });
-
-  socket.on('chzzk:test-widget-button', (field) => {
-    fireSE('event:test', { listener: 'widget-button', field });
-  });
-
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => setTimeout(fireWidgetLoad, 50));
-  } else {
-    setTimeout(fireWidgetLoad, 50);
-  }
+  const BADGE_URLS = { broadcaster:'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/3', moderator:'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/3', subscriber:'https://static-cdn.jtvnw.net/badges/v1/d12a2e27-16f6-41d0-ab77-b780518f00a3/3', vip:'https://static-cdn.jtvnw.net/badges/v1/b817aba4-fad8-49e2-b88a-7cc744dfa6ec/3' };
+  function dispatchSE(detail){ const run=()=>window.dispatchEvent(new CustomEvent('onEventReceived',{detail})); if(!widgetLoaded) pending.push(run); else run(); }
+  function fireWidgetLoad(){ if(widgetLoaded) return; widgetLoaded=true; window.dispatchEvent(new CustomEvent('onWidgetLoad',{detail:{fieldData:window.SE_FIELD_DATA||{},channel:{username:clientId,providerId:'100135110'},session:{data:{},currency:'치즈 '}}})); while(pending.length) pending.shift()(); }
+  function roleToTags(role){ const r=String(role||'common_user').toLowerCase(); if(r==='streamer'||r==='broadcaster') return {type:'broadcaster',badges:'broadcaster/1',mod:'0',subscriber:'0',vip:'0',userType:'streamer'}; if(r==='manager'||r==='moderator'||r==='mod'||r==='streaming_channel_manager'||r==='streaming_chat_manager') return {type:'moderator',badges:'moderator/1',mod:'1',subscriber:'0',vip:'0',userType:'mod'}; if(r==='subscriber'||r==='sub') return {type:'subscriber',badges:'subscriber/1',mod:'0',subscriber:'1',vip:'0',userType:'subscriber'}; if(r==='follower'||r==='vip') return {type:'vip',badges:'vip/1',mod:'0',subscriber:'0',vip:'1',userType:'vip'}; return {type:null,badges:'',mod:'0',subscriber:'0',vip:'0',userType:'default'}; }
+  function makeBadges(role){ const t=roleToTags(role); return t.type ? [{type:t.type,version:'1',url:BADGE_URLS[t.type]}] : []; }
+  function emoteArray(rawEmotes,text){ const out=[]; if(Array.isArray(rawEmotes)){ for(const e of rawEmotes){ const name=e.name||e.code||e.id; const url=e.url||e.imageUrl||e.image; if(name&&url) out.push({name,urls:{1:url,2:url,4:url}}); } } else if(rawEmotes&&typeof rawEmotes==='object'){ for(const [name,url] of Object.entries(rawEmotes)){ if(name&&url) out.push({name,urls:{1:url,2:url,4:url}}); } } if(String(text||'').includes('{:d_51:}')&&!out.some(e=>e.name==='{:d_51:}')) out.push({name:'{:d_51:}',urls:{1:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png',2:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png',4:'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png'}}); return out; }
+  function toSEMessage(payload){ const nickname=payload.nickname||'익명'; const role=roleToTags(payload.role); const text=String(payload.message||payload.content||''); return {listener:'message',event:{data:{tags:{badges:role.badges,color:payload.color||'#5B99FF',mod:role.mod,subscriber:role.subscriber,vip:role.vip,'user-id':payload.userId||nickname,'user-type':role.userType},userId:payload.userId||nickname,displayName:nickname,displayColor:payload.color||'#5B99FF',badges:makeBadges(payload.role),text,emotes:emoteArray(payload.emotes,text),msgId:payload.id||('chzzk-'+Date.now())},renderedText:text}}; }
+  function toSETip(payload){ const amount=Number(payload.amount||payload.payAmount||0); const name=payload.nickname||payload.donatorNickname||'익명'; return {listener:'tip-latest',event:{name:'tip-latest',data:{name,displayName:name,sender:name,amount,formattedAmount:amount.toLocaleString('ko-KR')+' 치즈',currency:'치즈',message:payload.message||payload.donationText||'',text:payload.message||payload.donationText||''}}}; }
+  socket.on('chzzk:chat', payload => dispatchSE(toSEMessage(payload)));
+  socket.on('chzzk:donation', payload => dispatchSE(toSETip(payload)));
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',()=>setTimeout(fireWidgetLoad,0)); else setTimeout(fireWidgetLoad,0);
 })();

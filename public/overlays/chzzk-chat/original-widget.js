@@ -9,7 +9,7 @@ function _0x1c9d() {
         '</span>\x0a\x0a<span\x20class=\x22alerttext\x22>\x20\x20\x0a',
         '15358vIzNTU',
         'pronouns',
-        '<svg\x20width=\x22260.306\x22\x20height=\x22261.125\x22\x20viewBox=\x220\x200\x20260.306\x20261.125\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22>\x0a\x20\x20<path\x20style=\x22fill:{badgescolor};stroke:none;stroke-width:2.236;stroke-linecap:square;paint-order:markers\x20stroke\x20fill\x22\x20d=\x22M249.344\x2055.868s-49.869\x2046.12-66.367\x2073.49c0\x200-44.62-8.248-65.242\x2035.621\x200\x200-4.124\x209.75-3.374\x2020.998\x200\x200\x204.43\x2012.464-21.816\x2036.086\x200\x200\x2060.06\x204.784\x2085.183-8.34\x2025.122-13.123\x2026.996-44.244\x2026.621-47.619-.374-3.374-.374-16.498-.374-16.498l73.115-65.991s26.997\x2032.246\x2018.748\x2064.491c-8.249\x2032.246-17.998\x2036.746-36.37\x2057.368-18.373\x2020.623-17.248\x2010.499-18.748\x2031.871-1.5\x2021.373-17.998\x2050.994-54.368\x2058.868-36.37\x207.874-82.115-9.374-91.864-16.123-9.749-6.75-56.618-37.87-57.368-96.738S55.868\x2093.363\x2070.491\x2079.115C85.114\x2064.867\x20116.235\x2036.37\x20163.48\x2037.12c47.244.75\x2068.991\x202.25\x2085.864\x2018.748z\x22\x20transform=\x22translate(-37.1\x20-37.106)\x22/>\x0a</svg>',
+        '<svg\x20width=\x22260.306\x22\x20height=\x22261.125\x22\x20viewBox=\x220\x200\x20260.306\x20261.125\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22>\x0a\x20\x20<path\x20style=\x22fill:#ffffff;stroke:none;stroke-width:2.236;stroke-linecap:square;paint-order:markers\x20stroke\x20fill\x22\x20d=\x22M249.344\x2055.868s-49.869\x2046.12-66.367\x2073.49c0\x200-44.62-8.248-65.242\x2035.621\x200\x200-4.124\x209.75-3.374\x2020.998\x200\x200\x204.43\x2012.464-21.816\x2036.086\x200\x200\x2060.06\x204.784\x2085.183-8.34\x2025.122-13.123\x2026.996-44.244\x2026.621-47.619-.374-3.374-.374-16.498-.374-16.498l73.115-65.991s26.997\x2032.246\x2018.748\x2064.491c-8.249\x2032.246-17.998\x2036.746-36.37\x2057.368-18.373\x2020.623-17.248\x2010.499-18.748\x2031.871-1.5\x2021.373-17.998\x2050.994-54.368\x2058.868-36.37\x207.874-82.115-9.374-91.864-16.123-9.749-6.75-56.618-37.87-57.368-96.738S55.868\x2093.363\x2070.491\x2079.115C85.114\x2064.867\x20116.235\x2036.37\x20163.48\x2037.12c47.244.75\x2068.991\x202.25\x2085.864\x2018.748z\x22\x20transform=\x22translate(-37.1\x20-37.106)\x22/>\x0a</svg>',
         'listener',
         'catch',
         'testMessageSub',
@@ -50,7 +50,7 @@ function _0x1c9d() {
         '\x20raided\x20with\x20',
         'children',
         'outdown',
-        '</span>\x0a</span>\x0a<div\x20class=\x22msgcont\x22>\x20\x0a<div\x20class=\x22messagebox\x22\x20style=\x22box-shadow:\x20none;\x20border:\x204px\x20solid\x20{bordercol}\x22>\x0a\x20\x20\x20\x20<span\x20class=\x22message\x22>\x0a\x20\x20\x20\x20',
+        '</span>\x0a</span>\x0a<div\x20class=\x22msgcont\x22>\x20\x0a<div\x20class=\x22messagebox\x22\x20style=\x22box-shadow:\x20none;\x20border:\x204px\x20solid\x20#97d561\x22>\x0a\x20\x20\x20\x20<span\x20class=\x22message\x22>\x0a\x20\x20\x20\x20',
         'largeEmotes',
         'display',
         'Moderator',
@@ -90,7 +90,7 @@ function _0x1c9d() {
         '<img\x20class=\x22large\x22\x20src=\x22',
         'Lorem\x20ipsum\x20dolor\x20sit\x20amet,\x20consectetur\x20adipiscing\x20elit,\x20sed\x20do\x20eiusmod\x20tempor\x20incididunt\x20ut\x20labore\x20et\x20dolore\x20magna\x20aliqua.',
         'msgFont',
-        '.main-container\x20div:nth-last-child(-n+{msgLimitAmount})',
+        '.main-container\x20div:nth-last-child(-n+4)',
         '1292172AJjaRZ',
         'css',
         '.broadcaster',
@@ -135,7 +135,7 @@ function _0x1c9d() {
         'urls',
         '\x22\x20class=\x22message-row\x20animation1\x20',
         'bottom',
-        '<svg\x20class=\x22svgbadge\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20xmlns:svg=\x22http://www.w3.org/2000/svg\x22\x20version=\x221.1\x22\x20id=\x22svg902\x22\x20viewBox=\x220\x200\x2096\x2096\x22>\x0a\x20\x20<defs\x20id=\x22defs906\x22/>\x0a\x20\x20<g\x20id=\x22g908\x22>\x0a\x20\x20\x20\x20<path\x20fill=\x22{badgescolor}\x22\x20d=\x22M\x2019.403191,10.959868\x200.36376509,36.881015\x2047.159463,87.576356\x2095.560901,35.504671\x2076.292081,11.189259\x20Z\x22\x20id=\x22path916\x22/>\x0a\x20\x20</g>\x0a</svg>',
+        '<svg\x20class=\x22svgbadge\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20xmlns:svg=\x22http://www.w3.org/2000/svg\x22\x20version=\x221.1\x22\x20id=\x22svg902\x22\x20viewBox=\x220\x200\x2096\x2096\x22>\x0a\x20\x20<defs\x20id=\x22defs906\x22/>\x0a\x20\x20<g\x20id=\x22g908\x22>\x0a\x20\x20\x20\x20<path\x20fill=\x22#ffffff\x22\x20d=\x22M\x2019.403191,10.959868\x200.36376509,36.881015\x2047.159463,87.576356\x2095.560901,35.504671\x2076.292081,11.189259\x20Z\x22\x20id=\x22path916\x22/>\x0a\x20\x20</g>\x0a</svg>',
         'displayName',
         'filter',
         'broadcaster',
@@ -156,7 +156,7 @@ function _0x1c9d() {
         'emotes',
         'alertsraids',
         '43285909-412c-4eee-b80d-89228ba78199',
-        '<svg\x20class=\x22svgbadge\x22\x20width=\x22258.166\x22\x20height=\x22258.166\x22\x20viewBox=\x220\x200\x2068.306\x2068.306\x22\x20xml:space=\x22preserve\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22>\x0a\x20\x20<path\x20style=\x22fill:{badgescolor};stroke-width:3.293;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none;paint-order:stroke\x20fill\x20markers\x22\x20d=\x22M100.243\x20106.668c-.419\x200-.838.158-1.158.476L82.462\x20123.6l-12.86-11.883c-1.078-.997-2.823-.192-2.764\x201.275l1.243\x2031.403a1.646\x201.646\x200\x200\x200\x201.646\x201.581h60.323c.877\x200\x201.6-.687\x201.644-1.564l1.596-32.113c.074-1.505-1.743-2.31-2.809-1.246l-12.502\x2012.502-16.578-16.412a1.642\x201.642\x200\x200\x200-1.158-.476z\x22\x20transform=\x22translate(-65.823\x20-93.145)\x22/>\x0a</svg>',
+        '<svg\x20class=\x22svgbadge\x22\x20width=\x22258.166\x22\x20height=\x22258.166\x22\x20viewBox=\x220\x200\x2068.306\x2068.306\x22\x20xml:space=\x22preserve\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22>\x0a\x20\x20<path\x20style=\x22fill:#ffffff;stroke-width:3.293;stroke-linecap:round;stroke-linejoin:round;-inkscape-stroke:none;paint-order:stroke\x20fill\x20markers\x22\x20d=\x22M100.243\x20106.668c-.419\x200-.838.158-1.158.476L82.462\x20123.6l-12.86-11.883c-1.078-.997-2.823-.192-2.764\x201.275l1.243\x2031.403a1.646\x201.646\x200\x200\x200\x201.646\x201.581h60.323c.877\x200\x201.6-.687\x201.644-1.564l1.596-32.113c.074-1.505-1.743-2.31-2.809-1.246l-12.502\x2012.502-16.578-16.412a1.642\x201.642\x200\x200\x200-1.158-.476z\x22\x20transform=\x22translate(-65.823\x20-93.145)\x22/>\x0a</svg>',
         'not',
         'slideToggle',
         '\x20times',
@@ -182,8 +182,8 @@ function _0x1c9d() {
         'msgHideOpt',
         '#1e90ff',
         'https://static-cdn.jtvnw.net/badges/v1/3267646d-33f0-4b17-b3df-f923a41db1d0/3',
-        '.main-container\x20div:nth-child(-n+{msgLimitAmount})',
-        '<img\x20src=\x22{alerticon}\x22\x20class=\x22alerticon\x22>',
+        '.main-container\x20div:nth-child(-n+4)',
+        '<img\x20src=\x22\x22\x20class=\x22alerticon\x22>',
         'appendTo',
         'forEach',
         'testMessageFirst',
@@ -192,7 +192,7 @@ function _0x1c9d() {
         'subscriber-latest',
         'addClass',
         'nick',
-        '<svg\x20class=\x22svgbadge\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20xmlns:svg=\x22http://www.w3.org/2000/svg\x22\x20version=\x221.1\x22\x20id=\x22svg966\x22\x20viewBox=\x220\x200\x2096\x2096\x22>\x0a\x20\x20<defs\x20id=\x22defs970\x22/>\x0a\x20\x20<g\x20id=\x22g972\x22>\x0a\x20\x20\x20\x20<path\x20fill=\x22{badgescolor}\x22\x20stroke=\x22{badgescolor}\x22\x20d=\x22m\x205.514926,89.698649\x206.163741,6.001538\x2019.302241,-12.65189\x2013.1385,12.489686\x208.110185,-7.785778\x20L\x2039.253297,76.073538\x2090.671872,29.196667\x2090.509668,0.97322224\x2056.771297,1.7842408\x2023.843945,62.448427\x2010.705445,51.742982\x204.8661112,59.690964\x2016.706982,70.396408\x20Z\x22\x20id=\x22path976\x22/>\x0a\x20\x20</g>\x0a</svg>',
+        '<svg\x20class=\x22svgbadge\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20xmlns:svg=\x22http://www.w3.org/2000/svg\x22\x20version=\x221.1\x22\x20id=\x22svg966\x22\x20viewBox=\x220\x200\x2096\x2096\x22>\x0a\x20\x20<defs\x20id=\x22defs970\x22/>\x0a\x20\x20<g\x20id=\x22g972\x22>\x0a\x20\x20\x20\x20<path\x20fill=\x22#ffffff\x22\x20stroke=\x22#ffffff\x22\x20d=\x22m\x205.514926,89.698649\x206.163741,6.001538\x2019.302241,-12.65189\x2013.1385,12.489686\x208.110185,-7.785778\x20L\x2039.253297,76.073538\x2090.671872,29.196667\x2090.509668,0.97322224\x2056.771297,1.7842408\x2023.843945,62.448427\x2010.705445,51.742982\x204.8661112,59.690964\x2016.706982,70.396408\x20Z\x22\x20id=\x22path976\x22/>\x0a\x20\x20</g>\x0a</svg>',
         'moderator/1',
         'html',
         'body',
@@ -294,7 +294,7 @@ function addMessage(_0x592e1d, _0x478d5d, _0xae7925, _0x5e0618, _0x504596, _0x37
     msgAlign === _0x44fd89(0xcd) ? ($(_0x5bf64a)[_0x44fd89(0x18)](_0x44fd89(0xb8)), $(_0x44fd89(0x3b))['last']()[_0x44fd89(0xdd)]()) : ($(_0x5bf64a)['prependTo'](_0x44fd89(0xb8)), $(_0x44fd89(0x3b))[_0x44fd89(0xca)]()[_0x44fd89(0xdd)]());
     msgHideOpt === !![] && $(_0x44fd89(0x75))[_0x44fd89(0x1e)](_0x44fd89(0x47));
     badgesDisplay === ![] && $('.badgescont')[_0x44fd89(0xa3)](_0x44fd89(0x7b), _0x44fd89(0x55));
-    badgesCustom === !![] && ($(_0x44fd89(0x5c))[_0x44fd89(0x22)](_0x44fd89(0xce)), $('.moderator')[_0x44fd89(0x22)](_0x44fd89(0x20)), $(_0x44fd89(0xa4))[_0x44fd89(0x22)]('\x0a<svg\x20class=\x22svgbadge\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20xmlns:svg=\x22http://www.w3.org/2000/svg\x22\x20viewBox=\x220\x200\x2030.074135\x2021.467426\x22\x20version=\x221.1\x22\x20id=\x22svg5\x22\x20xml:space=\x22preserve\x22><defs\x20id=\x22defs2\x22/><g\x20id=\x22layer1\x22\x20transform=\x22translate(-72.032296,-84.451693)\x22><path\x20id=\x22rect237\x22\x20style=\x22fill:{badgescolor};stroke-width:0\x22\x20d=\x22m\x2076.467684,84.451693\x20c\x20-2.457256,0\x20-4.435388,1.978132\x20-4.435388,4.435388\x20v\x2012.596649\x20c\x200,2.45725\x201.978132,4.43539\x204.435388,4.43539\x20h\x2012.774414\x20c\x202.457256,0\x204.435388,-1.97814\x204.435388,-4.43539\x20v\x20-1.44074\x20l\x208.403624,3.88762\x200.0253,-8.658906\x20-0.3328,-8.654252\x20-8.096144,4.028178\x20v\x20-1.758549\x20c\x200,-2.457256\x20-1.978132,-4.435388\x20-4.435388,-4.435388\x20z\x22/></g></svg>\x0a'), $(_0x44fd89(0xb5))[_0x44fd89(0x22)](_0x44fd89(0xe3)), $(_0x44fd89(0x9a))[_0x44fd89(0x22)](_0x44fd89(0x50)));
+    badgesCustom === !![] && ($(_0x44fd89(0x5c))[_0x44fd89(0x22)](_0x44fd89(0xce)), $('.moderator')[_0x44fd89(0x22)](_0x44fd89(0x20)), $(_0x44fd89(0xa4))[_0x44fd89(0x22)]('\x0a<svg\x20class=\x22svgbadge\x22\x20xmlns=\x22http://www.w3.org/2000/svg\x22\x20xmlns:svg=\x22http://www.w3.org/2000/svg\x22\x20viewBox=\x220\x200\x2030.074135\x2021.467426\x22\x20version=\x221.1\x22\x20id=\x22svg5\x22\x20xml:space=\x22preserve\x22><defs\x20id=\x22defs2\x22/><g\x20id=\x22layer1\x22\x20transform=\x22translate(-72.032296,-84.451693)\x22><path\x20id=\x22rect237\x22\x20style=\x22fill:#ffffff;stroke-width:0\x22\x20d=\x22m\x2076.467684,84.451693\x20c\x20-2.457256,0\x20-4.435388,1.978132\x20-4.435388,4.435388\x20v\x2012.596649\x20c\x200,2.45725\x201.978132,4.43539\x204.435388,4.43539\x20h\x2012.774414\x20c\x202.457256,0\x204.435388,-1.97814\x204.435388,-4.43539\x20v\x20-1.44074\x20l\x208.403624,3.88762\x200.0253,-8.658906\x20-0.3328,-8.654252\x20-8.096144,4.028178\x20v\x20-1.758549\x20c\x200,-2.457256\x20-1.978132,-4.435388\x20-4.435388,-4.435388\x20z\x22/></g></svg>\x0a'), $(_0x44fd89(0xb5))[_0x44fd89(0x22)](_0x44fd89(0xe3)), $(_0x44fd89(0x9a))[_0x44fd89(0x22)](_0x44fd89(0x50)));
     let _0x19d7c9 = $('.' + _0x2e572d);
     msgAlign === _0x44fd89(0xcd) ? $('.main-container>div')['last']()['slideToggle'](0x190) : $(_0x44fd89(0x3b))[_0x44fd89(0xca)]()['slideToggle'](0x190), msgLimit === !![] && (totalMessages > msgLimitAmount && (msgAlign === _0x44fd89(0xcd) ? $(_0x44fd89(0xb8))[_0x44fd89(0x77)]()[_0x44fd89(0xe4)](_0x44fd89(0xa1))['fadeOut'](0x1f4, function () {
         const _0x5939cc = _0x44fd89;
@@ -398,7 +398,7 @@ window[_0x1a08c7(0xc5)](_0x1a08c7(0x8), function (_0x5974cb) {
                 $(_0x497996)[_0x311086(0x88)]('.main-container'), $(_0x311086(0x3b))[_0x311086(0xca)]()[_0x311086(0xdd)]()[_0x311086(0xe5)](0x190);
                 ;
             }
-            glowon == !![] && $(_0x311086(0x27))[_0x311086(0x1e)](_0x311086(0x62)), alerttextglow === !![] && $(_0x311086(0x84))[_0x311086(0x1e)]('alertglow'), msgHideOpt === !![] && $('.animation1')[_0x311086(0x1e)]('animationOut'), msgLimit === !![] && (totalMessages > msgLimitAmount && (msgAlign === _0x311086(0xcd) ? $('.main-container')[_0x311086(0x77)]()['not']('.main-container\x20div:nth-last-child(-n+{msgLimitAmount})')[_0x311086(0x1c)](0x1f4, function () {
+            glowon == !![] && $(_0x311086(0x27))[_0x311086(0x1e)](_0x311086(0x62)), alerttextglow === !![] && $(_0x311086(0x84))[_0x311086(0x1e)]('alertglow'), msgHideOpt === !![] && $('.animation1')[_0x311086(0x1e)]('animationOut'), msgLimit === !![] && (totalMessages > msgLimitAmount && (msgAlign === _0x311086(0xcd) ? $('.main-container')[_0x311086(0x77)]()['not']('.main-container\x20div:nth-last-child(-n+4)')[_0x311086(0x1c)](0x1f4, function () {
                 const _0x51f92f = _0x311086;
                 $(this)[_0x51f92f(0x7d)]();
             }) : $(_0x311086(0xb8))[_0x311086(0x77)]()[_0x311086(0xe4)](_0x311086(0x16))[_0x311086(0x1c)](0x1f4, function () {
