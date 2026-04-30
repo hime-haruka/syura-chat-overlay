@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHZZK Overlay Admin</title>
+  <style>
+    body { font-family: system-ui, sans-serif; padding: 24px; background: #111; color: #fff; }
+    input, button { font: inherit; padding: 10px 12px; border-radius: 8px; border: 0; }
+    button { cursor: pointer; margin-right: 8px; }
+    pre { background: #222; padding: 16px; border-radius: 12px; white-space: pre-wrap; }
+    .row { margin: 12px 0; }
+  </style>
+</head>
+<body>
+  <h1>CHZZK Overlay Admin</h1>
+  <div class="row">
+    <input id="clientId" value="pop" />
+    <button id="connect">Connect</button>
+    <button id="disconnect">Disconnect</button>
+    <button id="testChat">Test Chat</button>
+    <button id="testDonation">Test Donation</button>
+  </div>
+  <p>OBS URL: <code id="obsUrl"></code></p>
+  <pre id="log"></pre>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const input = document.querySelector('#clientId');
+    const log = document.querySelector('#log');
+    const obsUrl = document.querySelector('#obsUrl');
+    let socket;
+
+    function clientId() { return input.value.trim() || 'pop'; }
+    function setObsUrl() { obsUrl.textContent = `${location.origin}/chat/${clientId()}`; }
+    function print(v) { log.textContent = `${new Date().toISOString()}\n${JSON.stringify(v, null, 2)}\n\n` + log.textContent; }
+
+    function bindSocket() {
+      if (socket) socket.disconnect();
+      socket = io({ query: { clientId: clientId() } });
+      socket.on('chzzk:status', print);
+      socket.on('chzzk:chat', print);
+      socket.on('chzzk:donation', print);
+      socket.on('chzzk:raw', (packet) => print({ raw: packet }));
+    }
+
+    async function post(url, body = {}) {
+      const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+      const json = await res.json();
+      print(json);
+    }
+
+    input.addEventListener('change', () => { setObsUrl(); bindSocket(); });
+    document.querySelector('#connect').onclick = () => post(`/api/connect/${clientId()}`);
+    document.querySelector('#disconnect').onclick = () => post(`/api/disconnect/${clientId()}`);
+    document.querySelector('#testChat').onclick = () => post(`/api/test/chat/${clientId()}`, { role: 'streamer' });
+    document.querySelector('#testDonation').onclick = () => post(`/api/test/donation/${clientId()}`, { amount: 1000 });
+
+    setObsUrl();
+    bindSocket();
+  </script>
+</body>
+</html>

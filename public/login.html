@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CHZZK 채팅 오버레이 로그인</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: radial-gradient(circle at top, #26344d 0, #10131d 48%, #090b10 100%);
+      color: #fff;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+    }
+    .card {
+      width: min(720px, 100%);
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 28px;
+      padding: 28px;
+      box-shadow: 0 24px 80px rgba(0,0,0,0.35);
+      backdrop-filter: blur(18px);
+    }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    p { color: rgba(255,255,255,0.78); line-height: 1.6; }
+    label { display: block; margin: 18px 0 8px; color: rgba(255,255,255,0.72); font-weight: 700; }
+    input {
+      width: 100%;
+      padding: 14px 16px;
+      border: 1px solid rgba(255,255,255,0.16);
+      border-radius: 14px;
+      background: rgba(0,0,0,0.28);
+      color: #fff;
+      font: inherit;
+      outline: none;
+    }
+    .buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+    button, a.button {
+      appearance: none;
+      border: 0;
+      border-radius: 999px;
+      padding: 12px 18px;
+      font: inherit;
+      font-weight: 800;
+      cursor: pointer;
+      color: #08100c;
+      background: #00ffa3;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+    }
+    button.secondary, a.secondary { background: rgba(255,255,255,0.14); color: #fff; }
+    button.warn { background: #ffd166; }
+    .status {
+      margin-top: 18px;
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(0,0,0,0.22);
+      white-space: pre-wrap;
+      color: rgba(255,255,255,0.84);
+      min-height: 72px;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 13px;
+    }
+    code { color: #8fffd0; word-break: break-all; }
+  </style>
+</head>
+<body>
+  <main class="card">
+    <h1>CHZZK 채팅 오버레이 로그인</h1>
+    <p>치지직 계정으로 로그인하면 이 클라이언트의 채팅을 OBS 브라우저 소스 오버레이로 받을 수 있습니다.</p>
+
+    <label for="clientId">클라이언트 ID</label>
+    <input id="clientId" autocomplete="off" />
+
+    <p>OBS 브라우저 소스 URL<br><code id="obsUrl"></code></p>
+
+    <div class="buttons">
+      <a id="loginButton" class="button" href="#">치지직 로그인</a>
+      <button id="connectButton" class="secondary">채팅 연결 시작</button>
+      <button id="testChatButton" class="warn">테스트 채팅</button>
+      <button id="testDonationButton" class="warn">테스트 후원</button>
+      <a id="openOverlayButton" class="button secondary" href="#" target="_blank" rel="noreferrer">오버레이 열기</a>
+    </div>
+
+    <div id="status" class="status">준비 중...</div>
+  </main>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const $ = (s) => document.querySelector(s);
+    const clientInput = $('#clientId');
+    const loginButton = $('#loginButton');
+    const connectButton = $('#connectButton');
+    const testChatButton = $('#testChatButton');
+    const testDonationButton = $('#testDonationButton');
+    const openOverlayButton = $('#openOverlayButton');
+    const obsUrl = $('#obsUrl');
+    const statusBox = $('#status');
+
+    const pathClientId = location.pathname.split('/').filter(Boolean).pop();
+    clientInput.value = pathClientId && pathClientId !== 'login' ? pathClientId : 'pop';
+
+    let socket;
+
+    function clientId() {
+      return clientInput.value.trim() || 'pop';
+    }
+
+    function print(value) {
+      statusBox.textContent = JSON.stringify(value, null, 2);
+    }
+
+    function refreshLinks() {
+      const id = encodeURIComponent(clientId());
+      obsUrl.textContent = `${location.origin}/chat/${id}`;
+      loginButton.href = `/auth/chzzk?clientId=${id}`;
+      openOverlayButton.href = `/chat/${id}`;
+      history.replaceState(null, '', `/login/${id}`);
+    }
+
+    function bindSocket() {
+      if (socket) socket.disconnect();
+      socket = io({ query: { clientId: clientId() } });
+      socket.on('chzzk:status', print);
+      socket.on('connect', () => loadStatus());
+    }
+
+    async function post(url, body = {}) {
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+      const json = await res.json();
+      print(json);
+      return json;
+    }
+
+    async function loadStatus() {
+      const res = await fetch(`/api/auth/status/${encodeURIComponent(clientId())}`);
+      print(await res.json());
+    }
+
+    clientInput.addEventListener('change', () => {
+      refreshLinks();
+      bindSocket();
+    });
+
+    connectButton.addEventListener('click', () => post(`/api/connect/${encodeURIComponent(clientId())}`));
+    testChatButton.addEventListener('click', () => post(`/api/test/chat/${encodeURIComponent(clientId())}`, {
+      nickname: '치지직테스트',
+      role: 'streamer',
+      message: '방송 전 디자인 확인용 테스트 채팅입니다 {:d_51:}',
+      emotes: [{ code: '{:d_51:}', url: 'https://ssl.pstatic.net/static/nng/glive/icon/d_51.png' }]
+    }));
+    testDonationButton.addEventListener('click', () => post(`/api/test/donation/${encodeURIComponent(clientId())}`, {
+      nickname: '후원테스트',
+      amount: 1000,
+      message: '방송 전 후원 알림 테스트입니다'
+    }));
+
+    refreshLinks();
+    bindSocket();
+  </script>
+</body>
+</html>
