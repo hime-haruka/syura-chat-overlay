@@ -203,15 +203,75 @@ async function subscribeAll(clientId, sessionKey, token) {
 
 function normalizeRole(data = {}) {
   const profile = parseMaybeJson(data.profile) || {};
-  const role = String(
-    data.userRoleCode || profile.userRoleCode || data.role || data.userRole || data.badge || data.grade || ''
-  ).toLowerCase();
-  const badgeText = JSON.stringify(data.badges || profile.badges || data.badgeList || []).toLowerCase();
 
-  if (role.includes('streamer') || role.includes('broadcaster') || role.includes('owner') || badgeText.includes('streamer')) return 'streamer';
-  if (role.includes('manager') || role.includes('moderator') || role.includes('mod') || role.includes('streaming_channel_manager') || role.includes('streaming_chat_manager') || badgeText.includes('manager')) return 'manager';
-  if (role.includes('subscriber') || role.includes('sub') || badgeText.includes('subscriber')) return 'subscriber';
-  if (role.includes('follower') || role.includes('vip') || badgeText.includes('follower')) return 'follower';
+  // 치지직 CHAT 패킷은 권한/구독 정보가 환경에 따라
+  // userRoleCode, profile, badges, badgeList, subscription 관련 필드 등으로 다르게 들어올 수 있음.
+  // 특정 필드 하나만 보면 구독자도 common_user로 떨어져 일반 테마가 적용될 수 있으므로,
+  // 원본 data/profile 전체를 함께 검사한다.
+  const roleSource = [
+    data.userRoleCode,
+    profile.userRoleCode,
+    data.role,
+    data.userRole,
+    data.badge,
+    data.grade,
+    data.badgeType,
+    data.memberRole,
+    data.membership,
+    data.membershipType,
+    data.subscription,
+    data.subscriptionType,
+    data.subscribeType,
+    profile.badge,
+    profile.grade,
+    profile.badgeType,
+    profile.memberRole,
+    profile.membership,
+    profile.membershipType,
+    profile.subscription,
+    profile.subscriptionType,
+    profile.subscribeType
+  ].filter(v => v !== undefined && v !== null).join(' ');
+
+  const role = String(roleSource).toLowerCase();
+  const allText = JSON.stringify({ data, profile }).toLowerCase();
+
+  const truthy = value => value === true || value === 1 || value === '1' || String(value).toLowerCase() === 'true' || String(value).toLowerCase() === 'y';
+  const isSubscriber = [
+    data.isSubscriber,
+    data.subscriber,
+    data.isSubscribed,
+    data.subscribed,
+    data.hasSubscription,
+    data.subscriptionActive,
+    profile.isSubscriber,
+    profile.subscriber,
+    profile.isSubscribed,
+    profile.subscribed,
+    profile.hasSubscription,
+    profile.subscriptionActive
+  ].some(truthy);
+
+  if (
+    role.includes('streamer') || role.includes('broadcaster') || role.includes('owner') ||
+    role.includes('channel_owner') || role.includes('creator') ||
+    allText.includes('streamer') || allText.includes('broadcaster') || allText.includes('channel_owner') || allText.includes('owner')
+  ) return 'streamer';
+
+  if (
+    role.includes('manager') || role.includes('moderator') || role.includes('mod') ||
+    role.includes('streaming_channel_manager') || role.includes('streaming_chat_manager') ||
+    allText.includes('manager') || allText.includes('moderator') || allText.includes('streaming_channel_manager') || allText.includes('streaming_chat_manager')
+  ) return 'manager';
+
+  if (
+    isSubscriber ||
+    role.includes('subscriber') || role.includes('subscription') || role.includes('subscribe') || role === 'sub' ||
+    allText.includes('subscriber') || allText.includes('subscription') || allText.includes('subscribe') ||
+    allText.includes('paid_subscriber') || allText.includes('membership') || allText.includes('구독')
+  ) return 'subscriber';
+
+  if (role.includes('follower') || role.includes('vip') || allText.includes('follower') || allText.includes('vip')) return 'follower';
   return 'common_user';
 }
 
